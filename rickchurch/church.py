@@ -1,17 +1,17 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
+import fastapi
 import pydispix
-from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
 from rickchurch import constants
+from rickchurch.auth import authorized
 from rickchurch.log import setup_logging
 
 logger = logging.getLogger("rickchurch")
-app = FastAPI()
+app = fastapi.FastAPI()
 client: Optional[pydispix.Client] = None
-canvas: Optional[pydispix.Canvas] = None
 
 
 def custom_openapi() -> Dict[str, Any]:
@@ -20,7 +20,7 @@ def custom_openapi() -> Dict[str, Any]:
         return app.openapi_schema
 
     openapi_schema = get_openapi(
-        title="Pixels API",
+        title="Rick Church API",
         description=None,
         version="1.0.0",
         routes=app.routes,
@@ -53,12 +53,10 @@ app.openapi = custom_openapi
 @app.on_event("startup")
 async def startup() -> None:
     """Create asyncpg connection pool on startup and setup logging."""
-    # We have to make a global client and canvas objects as there is no way for
-    # us to send the objects to the following requests from this function.
+    # We have to make a global client object as there is no way for us to
+    # send the objects to the following requests from this function.
     global client
-    global canvas
     client = pydispix.Client(constants.pixels_api_token)
-    canvas = await client.get_canvas()
 
     setup_logging(constants.log_level)
 
@@ -70,3 +68,16 @@ async def startup() -> None:
 async def shutdown() -> None:
     """Close down the app."""
     await constants.DB_POOL.close()
+
+
+@app.middleware("http")
+async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Response:
+    """Get a connection from the pool and a canvas reference for this request."""
+    async with constants.DB_POOL.acquire() as connection:
+        request.state.db_conn = connection
+        request.state.client = client
+        request.state.auth = await authorized(connection, request.headers.get("Authorization"))
+        response = await callnext(request)
+    request.state.db_conn = None
+    request.state.client = None
+    return response
