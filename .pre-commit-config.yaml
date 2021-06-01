@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-toml # For pyproject.toml
+      - id: check-yaml # For workflows
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.5.1
+    hooks:
+      - id: python-check-blanket-noqa # Enforce noqa annotations (noqa: F401,W203)
+      - id: python-use-type-annotations # Enforce type annotations instead of type comments
+      - id: python-no-log-warn # Quick check for deprecated `.warn()` instead of `.warning()`
+  - repo: local
+    hooks:
+      - id: flake8
+        name: Flake8
+        description: Run flake8 checks on the code
+        entry: poetry run flake8
+        language: python
+        types: [python]
+        require_serial: true
