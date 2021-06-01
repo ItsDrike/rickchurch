@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import pydispix
 from fastapi import FastAPI
@@ -51,9 +51,19 @@ app.openapi = custom_openapi
 
 @app.on_event("startup")
 async def startup() -> None:
+    """Create asyncpg connection pool on startup."""
     # We have to make a global client and canvas objects as there is no way for
     # us to send the objects to the following requests from this function.
     global client
     global canvas
     client = pydispix.Client(constants.pixels_api_token)
     canvas = await client.get_canvas()
+
+    # Initialize DB connection
+    await constants.DB_POOL
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    """Close down the app."""
+    await constants.DB_POOL.close()
