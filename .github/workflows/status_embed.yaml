@@ -2,7 +2,7 @@ name: Status Embed
 
 on:
   workflow_run:
-    workflows: ["Verification"]
+    workflows: ["Validation"]
     types: ["completed"]
 
 jobs:
