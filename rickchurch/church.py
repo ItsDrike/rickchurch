@@ -1,6 +1,7 @@
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
+import asyncpg
 import fastapi
 import pydispix
 from fastapi.openapi.utils import get_openapi
@@ -8,6 +9,7 @@ from fastapi.openapi.utils import get_openapi
 from rickchurch import constants
 from rickchurch.auth import authorized
 from rickchurch.log import setup_logging
+from rickchurch.models import Project
 
 logger = logging.getLogger("rickchurch")
 app = fastapi.FastAPI()
@@ -81,3 +83,31 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
     request.state.db_conn = None
     request.state.client = None
     return response
+
+
+async def fetch_projects(db_conn: asyncpg.Connection) -> List[Project]:
+    """Obtain list of active projects in the database"""
+    async with db_conn.transaction():
+        db_projects = await db_conn.fetchrow("SELECT * FROM projects")
+
+    projects = []
+    for db_project in db_projects:
+        project = Project(
+            name=db_project["project_name"],
+            x=db_project["position_x"],
+            y=db_project["position_y"],
+            priority=db_project["project_priority"],
+            image=db_project["base64_image"]
+        )
+        projects.append(project)
+    return projects
+
+
+# region: endpoints
+
+@app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
+async def get_projects(request: fastapi.Request) -> List[Project]:
+    request.state.auth.raise_if_failed()
+    return await fetch_projects(request.state.db_conn)
+
+# endregion
