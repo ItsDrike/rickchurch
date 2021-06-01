@@ -6,8 +6,9 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
 from rickchurch import constants
+from rickchurch.log import setup_logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rickchurch")
 app = FastAPI()
 client: Optional[pydispix.Client] = None
 canvas: Optional[pydispix.Canvas] = None
@@ -51,13 +52,15 @@ app.openapi = custom_openapi
 
 @app.on_event("startup")
 async def startup() -> None:
-    """Create asyncpg connection pool on startup."""
+    """Create asyncpg connection pool on startup and setup logging."""
     # We have to make a global client and canvas objects as there is no way for
     # us to send the objects to the following requests from this function.
     global client
     global canvas
     client = pydispix.Client(constants.pixels_api_token)
     canvas = await client.get_canvas()
+
+    setup_logging(constants.log_level)
 
     # Initialize DB connection
     await constants.DB_POOL
