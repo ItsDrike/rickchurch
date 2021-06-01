@@ -8,8 +8,7 @@ Applies to:
 
     - Copyright (c) 2021 Python Discord
       All rights reserved
-        - rickchurch/models.py:AuthState,AuthResult
-        - rickchurch/auth.py:authorized,reset_user_token
+        - rickchurch/auth.py:AuthState,AuthResult,authorized
         - rickchurch/church.py:custom_openapi,setup_data
 -------------------------------------------------------------------------------
 
