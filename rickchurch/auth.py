@@ -1,6 +1,6 @@
 import enum
 import secrets
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Tuple
 
 import asyncpg
 import fastapi
@@ -88,24 +88,28 @@ async def authorized(authorization: Optional[str], asyncpg_conn: asyncpg.Connect
 
 
 async def reset_user_token(user_id: int, asyncpg_conn: asyncpg.Connection) -> str:
-    """
-    Ensure a user exists and create a new token for them.
+    """Regenerate the token of an existing user and invalidate the old one"""
 
-    If the user already exists, their token is regenerated and the old token is invalidated.
-    """
     # Returns `None` if user doesn't exist and `False` if they aren't banned
     is_banned = await asyncpg_conn.fetchval("SELECT is_banned FROM users WHERE user_id = $1", user_id)
     if is_banned:
         raise PermissionError
 
+    token, salt = make_user_token(user_id)
+
+    async with asyncpg_conn.transaction():
+        await asyncpg_conn.execute("UPDATE users SET key_salt=$1 WHERE user_id=$2", salt, user_id)
+
+    return token
+
+
+def make_user_token(user_id: int) -> Tuple[str, str]:
+    """
+    Generate a JWT token for given user_id.
+
+    Returns a tuple of the JWT token, and the token_salt.
+    """
     # 22 long string
     token_salt = secrets.token_urlsafe(16)
-    is_mod = user_id in constants.mods
-    async with asyncpg_conn.transaction():
-        await asyncpg_conn.execute(
-            """INSERT INTO users (user_id, key_salt, is_mod) VALUES ($1, $1, $3)
-            ON CONFLICT (user_id) DO UPDATE SET key_salt=$2""",
-            user_id, token_salt, is_mod
-        )
     jwt_data = dict(id=user_id, salt=token_salt)
-    return jwt.encode(jwt_data, constants.jwt_secret, algorithm="HS256")
+    return jwt.encode(jwt_data, constants.jwt_secret, algorithm="HS256"), token_salt
