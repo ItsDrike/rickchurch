@@ -1,3 +1,4 @@
+import secrets
 from typing import Optional
 
 import asyncpg
@@ -35,3 +36,27 @@ async def authorized(authorization: Optional[str], asyncpg_conn: asyncpg.Connect
         return AuthResult(AuthState.MODERATOR, int(user_id))
     else:
         return AuthResult(AuthState.USER, int(user_id))
+
+
+async def reset_user_token(user_id: int, asyncpg_conn: asyncpg.Connection) -> str:
+    """
+    Ensure a user exists and create a new token for them.
+
+    If the user already exists, their token is regenerated and the old token is invalidated.
+    """
+    # Returns `None` if user doesn't exist and `False` if they aren't banned
+    is_banned = await asyncpg_conn.fetchval("SELECT is_banned FROM users WHERE user_id = $1", user_id)
+    if is_banned:
+        raise PermissionError
+
+    # 22 long string
+    token_salt = secrets.token_urlsafe(16)
+    is_mod = user_id in constants.mods
+    async with asyncpg_conn.transaction():
+        await asyncpg_conn.execute(
+            """INSERT INTO users (user_id, key_salt, is_mod) VALUES ($1, $1, $3)
+            ON CONFLICT (user_id) DO UPDATE SET key_salt=$2""",
+            user_id, token_salt, is_mod
+        )
+    jwt_data = dict(id=user_id, salt=token_salt)
+    return jwt.encode(jwt_data, constants.jwt_secret, algorithm="HS256")
