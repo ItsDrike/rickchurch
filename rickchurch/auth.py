@@ -126,7 +126,7 @@ async def add_user(user: dict, db_conn: asyncpg.Connection) -> str:
     user_id = int(user["id"])  # User id (snowflake) from discord
 
     async with db_conn.transaction():
-        user_data = await db_conn.fetchrow("SELECT * FROM users WHERE user_id = $1")
+        user_data = await db_conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
 
     if user_data is not None:
         # The user already exists, only reset his token
