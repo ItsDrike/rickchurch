@@ -19,7 +19,7 @@ app = fastapi.FastAPI()
 client: Optional[pydispix.Client] = None
 
 app.mount("/static", StaticFiles(directory="rickchurch/static"), name="static")
-templates = Jinja2Templates(directory="pixels/templates")
+templates = Jinja2Templates(directory="rickchurch/templates")
 
 
 def custom_openapi() -> Dict[str, Any]:
