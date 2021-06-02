@@ -4,14 +4,15 @@ from typing import Any, Callable, Dict, List, Optional
 import fastapi
 import pydispix
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from rickchurch import constants
-from rickchurch.auth import authorized
+from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
 from rickchurch.models import Project
-from rickchurch.utils import fetch_projects
+from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
 app = fastapi.FastAPI()
@@ -90,6 +91,45 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
     return response
 
 
+# region: Discord OAuth2
+
+@app.get("/oauth_callback", include_in_schema=False)
+async def auth_callback(request: fastapi.Request) -> fastapi.Response:
+    """This endpoint is only used as a redirect target from discord OAuth2."""
+    code = request.query_params["code"]
+    try:
+        user = await get_oauth_user(code)
+        token = await add_user(user, request.state.db_conn)
+    except PermissionError:
+        # `add_user` can return `PermissionError` if the user already has a token, which is banned.
+        raise fastapi.HTTPException(401, "You are banned")
+
+    # Redirect so that a user doesn't refresh the page and spam discord
+    redirect = RedirectResponse("/show_token", status_code=303)
+    redirect.set_cookie(
+        key='token',
+        value=token,
+        httponly=True,
+        max_age=10,
+        path='/show_token',
+    )
+    return redirect
+
+
+@app.get("/show_token", include_in_schema=False)
+async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)) -> fastapi.Response:  # noqa: B008
+    """Take a token from URL and show it."""
+    template_name = "cookie_disabled.html"
+    context: dict[str, Any] = {"request": request}
+
+    if token:
+        context["token"] = token
+        template_name = "api_token.html"
+
+    return templates.TemplateResponse(template_name, context)
+
+
+# endregion
 # region: Member Endpoints
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
