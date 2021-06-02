@@ -7,7 +7,7 @@ license = "AGPL"
 
 [tool.poetry.dependencies]
 python = "3.8.*"
-fastapi = "^0.65.1"
+fastapi = {extras = ["all"], version = "^0.65.1"}
 pydispix = {git = "https://github.com/ItsDrike/pydispix", rev = "async"}
 python-decouple = "^3.4"
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
