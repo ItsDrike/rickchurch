@@ -93,6 +93,15 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
 
 # region: Discord OAuth2
 
+@app.get("/authorize", tags=["Authorization Endpoints"], include_in_schema=False)
+async def authorize() -> fastapi.Response:
+    """
+    Redirect the user to discord authorization, the flow continues in /callback.
+    Unlike other endpoints, you should open this one in the browser, since it redirects to a discord website.
+    """
+    return RedirectResponse(url=constants.oauth_redirect_url)
+
+
 @app.get("/oauth_callback", include_in_schema=False)
 async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     """This endpoint is only used as a redirect target from discord OAuth2."""
