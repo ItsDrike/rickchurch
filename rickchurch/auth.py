@@ -87,6 +87,18 @@ async def authorized(authorization: Optional[str], asyncpg_conn: asyncpg.Connect
         return AuthResult(AuthState.USER, int(user_id))
 
 
+def make_user_token(user_id: int) -> Tuple[str, str]:
+    """
+    Generate a JWT token for given user_id.
+
+    Returns a tuple of the JWT token, and the token_salt.
+    """
+    # 22 long string
+    token_salt = secrets.token_urlsafe(16)
+    jwt_data = dict(id=user_id, salt=token_salt)
+    return jwt.encode(jwt_data, constants.jwt_secret, algorithm="HS256"), token_salt
+
+
 async def reset_user_token(user_id: int, asyncpg_conn: asyncpg.Connection) -> str:
     """Regenerate the token of an existing user and invalidate the old one"""
 
@@ -103,13 +115,29 @@ async def reset_user_token(user_id: int, asyncpg_conn: asyncpg.Connection) -> st
     return token
 
 
-def make_user_token(user_id: int) -> Tuple[str, str]:
+async def add_user(user: dict, db_conn: asyncpg.Connection) -> str:
     """
-    Generate a JWT token for given user_id.
+    Add a new church user. If given member already exists,
+    reset his token unless he is banned.
 
-    Returns a tuple of the JWT token, and the token_salt.
+    Return the new user's token.
     """
-    # 22 long string
-    token_salt = secrets.token_urlsafe(16)
-    jwt_data = dict(id=user_id, salt=token_salt)
-    return jwt.encode(jwt_data, constants.jwt_secret, algorithm="HS256"), token_salt
+    user_name = f"{user['username']}#{user['discriminator']}"  # Use the username#discriminator from discord
+    user_id = int(user["id"])  # User id (snowflake) from discord
+
+    async with db_conn.transaction():
+        user_data = await db_conn.fetchrow("SELECT * FROM users WHERE user_id = $1")
+
+    if user_data is not None:
+        # The user already exists, only reset his token
+        return await reset_user_token(user_id, db_conn)
+
+    token, salt = make_user_token(user_id)
+    async with db_conn.transaction():
+        await db_conn.execute(
+            """INSERT INTO users (user_id, user_name, key_salt, is_mod,
+            is_banned, projects_complete) VALUES ($1, $2, $3, $4, $5, $6)""",
+            user_id, user_name, salt, False, False, 0
+        )
+
+    return token

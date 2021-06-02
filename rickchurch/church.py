@@ -1,19 +1,25 @@
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
-import asyncpg
 import fastapi
 import pydispix
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from rickchurch import constants
-from rickchurch.auth import authorized
+from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
 from rickchurch.models import Project
+from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
 app = fastapi.FastAPI()
 client: Optional[pydispix.Client] = None
+
+app.mount("/static", StaticFiles(directory="rickchurch/static"), name="static")
+templates = Jinja2Templates(directory="pixels/templates")
 
 
 def custom_openapi() -> Dict[str, Any]:
@@ -85,25 +91,55 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
     return response
 
 
-async def fetch_projects(db_conn: asyncpg.Connection) -> List[Project]:
-    """Obtain list of active projects in the database"""
-    async with db_conn.transaction():
-        db_projects = await db_conn.fetchrow("SELECT * FROM projects")
+# region: Discord OAuth2
 
-    projects = []
-    for db_project in db_projects:
-        project = Project(
-            name=db_project["project_name"],
-            x=db_project["position_x"],
-            y=db_project["position_y"],
-            priority=db_project["project_priority"],
-            image=db_project["base64_image"]
-        )
-        projects.append(project)
-    return projects
+@app.get("/authorize", tags=["Authorization Endpoints"], include_in_schema=False)
+async def authorize() -> fastapi.Response:
+    """
+    Redirect the user to discord authorization, the flow continues in /oauth_callback.
+    Unlike other endpoints, you should open this one in the browser, since it redirects to a discord website.
+    """
+    return RedirectResponse(url=constants.oauth_redirect_url)
 
 
-# region: endpoints
+@app.get("/oauth_callback", include_in_schema=False)
+async def auth_callback(request: fastapi.Request) -> fastapi.Response:
+    """This endpoint is only used as a redirect target from discord OAuth2."""
+    code = request.query_params["code"]
+    try:
+        user = await get_oauth_user(code)
+        token = await add_user(user, request.state.db_conn)
+    except PermissionError:
+        # `add_user` can return `PermissionError` if the user already has a token, which is banned.
+        raise fastapi.HTTPException(401, "You are banned")
+
+    # Redirect so that a user doesn't refresh the page and spam discord
+    redirect = RedirectResponse("/show_token", status_code=303)
+    redirect.set_cookie(
+        key='token',
+        value=token,
+        httponly=True,
+        max_age=10,
+        path='/show_token',
+    )
+    return redirect
+
+
+@app.get("/show_token", include_in_schema=False)
+async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)) -> fastapi.Response:  # noqa: B008
+    """Take a token from URL and show it."""
+    template_name = "cookie_disabled.html"
+    context: dict[str, Any] = {"request": request}
+
+    if token:
+        context["token"] = token
+        template_name = "api_token.html"
+
+    return templates.TemplateResponse(template_name, context)
+
+
+# endregion
+# region: Member Endpoints
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
 async def get_projects(request: fastapi.Request) -> List[Project]:
