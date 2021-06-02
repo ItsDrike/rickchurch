@@ -12,6 +12,7 @@ pydispix = {git = "https://github.com/ItsDrike/pydispix", rev = "async"}
 python-decouple = "^3.4"
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
 asyncpg = "^0.23.0"
+httpx = "^0.18.1"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "~=1.5.7"
