@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-slim
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 
 # Set pip to have no saved cache
 ENV PIP_NO_CACHE_DIR=false \
