@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 	key_salt text NOT NULL,
 	is_mod bool NOT NULL DEFAULT false,
 	is_banned bool NOT NULL DEFAULT false,
+    projects_complete int4 NOT NULL DEFAULT 0,
 	CONSTRAINT users_pk PRIMARY KEY (user_id)
 );
 
