@@ -146,4 +146,9 @@ async def get_projects(request: fastapi.Request) -> List[Project]:
     request.state.auth.raise_if_failed()
     return await fetch_projects(request.state.db_conn)
 
+
+@app.get("/", include_in_schema=False, tags=["Member endpoint"])
+async def index(request: fastapi.Request) -> fastapi.Response:
+    return templates.TemplateResponse("index.html", {"request": request})
+
 # endregion
