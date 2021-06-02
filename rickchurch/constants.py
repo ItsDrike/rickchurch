@@ -11,7 +11,7 @@ discord_user_url: str = config("USER_URL", default="https://discord.com/api/user
 
 # Get these from https://discord.com/developers/applications, OAuth2 section
 client_id: str = config("CLIENT_ID")
-client_secret: str = config("CLIENT_ID")
+client_secret: str = config("CLIENT_SECRET")
 # Get this by adding {base_url}/oauth_callback as URI in the application's OAuth2 section
 oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 
