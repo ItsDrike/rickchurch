@@ -4,6 +4,8 @@ from typing import Any, Callable, Dict, List, Optional
 import fastapi
 import pydispix
 from fastapi.openapi.utils import get_openapi
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from rickchurch import constants
 from rickchurch.auth import authorized
@@ -14,6 +16,9 @@ from rickchurch.utils import fetch_projects
 logger = logging.getLogger("rickchurch")
 app = fastapi.FastAPI()
 client: Optional[pydispix.Client] = None
+
+app.mount("/static", StaticFiles(directory="rickchurch/static"), name="static")
+templates = Jinja2Templates(directory="pixels/templates")
 
 
 def custom_openapi() -> Dict[str, Any]:
