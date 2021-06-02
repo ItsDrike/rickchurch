@@ -81,10 +81,10 @@ async def shutdown() -> None:
 @app.middleware("http")
 async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Response:
     """Get a connection from the pool and a canvas reference for this request."""
-    async with constants.DB_POOL.acquire() as connection:
-        request.state.db_conn = connection
+    async with constants.DB_POOL.acquire() as db_connection:
+        request.state.db_conn = db_connection
         request.state.client = client
-        request.state.auth = await authorized(connection, request.headers.get("Authorization"))
+        request.state.auth = await authorized(request.headers.get("Authorization"), db_connection)
         response = await callnext(request)
     request.state.db_conn = None
     request.state.client = None
