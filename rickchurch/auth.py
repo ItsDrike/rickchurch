@@ -122,7 +122,7 @@ async def add_user(user: dict, db_conn: asyncpg.Connection) -> str:
 
     Return the new user's token.
     """
-    user_name = ""  # TODO: find the key for discord username, if not present, request it from discord
+    user_name = f"{user['username']}#{user['discriminator']}"  # Use the username#discriminator from discord
     user_id = int(user["id"])  # User id (snowflake) from discord
 
     async with db_conn.transaction():
