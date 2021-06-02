@@ -1,0 +1,8 @@
+@font-face {
+  font-family: comic-sans;
+  src: url('/static/qdbettercomicsans.ttf');
+}
+
+body {
+  font-family: comic-sans;
+}
