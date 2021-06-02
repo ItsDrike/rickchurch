@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import asyncpg
@@ -5,6 +6,8 @@ import httpx
 
 from rickchurch import constants
 from rickchurch.models import Project
+
+logger = logging.getLogger("rickchurch")
 
 
 async def fetch_projects(db_conn: asyncpg.Connection) -> List[Project]:
@@ -45,8 +48,12 @@ async def get_oauth_user(code: str) -> dict:
 
     async with httpx.AsyncClient() as client:
         response = await client.post(constants.discord_token_url, data=params, headers=headers)
-        discord_token = response.json()
-        auth_header = {"Authorization": f"Bearer {discord_token['access_token']}"}
+        data = response.json()
+        try:
+            auth_header = {"Authorization": f"Bearer {data['access_token']}"}
+        except KeyError as exc:
+            logger.error(f"Unable to obtain access token (response: {data})")
+            raise exc
         response = await client.get(constants.discord_user_url, headers=auth_header)
         user = response.json()
 
