@@ -180,11 +180,10 @@ async def set_mod(request: fastapi.Request, user: User) -> Message:
     async with db_conn.transaction():
         user_state = await db_conn.fetchrow("SELECT is_mod FROM users WHERE user_id = $1;", user.user_id)
 
-        # Raise HTTP 422 (Unprocessable Entity) if user wasn't found, or is already a mod
         if user_state is None:
-            raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} does not exist.")
+            raise fastapi.HTTPException(status_code=404, detail=f"User with user_id {user.user_id} does not exist.")
         elif user_state['is_mod']:
-            raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} is already a mod")
+            raise fastapi.HTTPException(status_code=409, detail=f"User with user_id {user.user_id} is already a mod")
 
         await db_conn.execute("UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id)
     return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
@@ -199,8 +198,7 @@ async def ban_user(request: fastapi.Request, user: User) -> Message:
     db_user = await db_conn.fetch("SELECT * FROM users WHERE user_id=$1", user.user_id)
 
     if not db_user:
-        # Raise HTTP 422 (Unprocessable Entity) if user wasn't found
-        raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} does not exist.")
+        raise fastapi.HTTPException(status_code=404, detail=f"User with user_id {user.user_id} does not exist.")
 
     await db_conn.execute("UPDATE users SET is_banned=TRUE WHERE user_id=$1", user.user_id)
     return Message(message=f"Successfully banned user_id {user.user_id}")
@@ -215,8 +213,7 @@ async def add_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
 
     if db_project is not None:
-        # Raise HTTP 422 (Unprocessable Entity) if this project already exists
-        raise fastapi.HTTPException(status_code=422, detail=f"Database project {project.name} already exists.")
+        raise fastapi.HTTPException(status_code=409, detail=f"Database project {project.name} already exists.")
 
     await db_conn.execute(
         """INSERT INTO projects (project_name, position_x, position_y, project_priority, base64_image)
@@ -235,8 +232,7 @@ async def remove_project(request: fastapi.Request, project: Project) -> Message:
     db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
 
     if db_project is None:
-        # Raise HTTP 422 (Unprocessable Entity) if this project doesn't exists
-        raise fastapi.HTTPException(status_code=422, detail=f"Database project {project.name} doesn't exists.")
+        raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exists.")
 
     await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
     return Message(message=f"Project {project.name} was added successfully.")
