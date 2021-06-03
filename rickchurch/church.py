@@ -184,4 +184,20 @@ async def set_mod(request: fastapi.Request, user: User) -> Message:
         await db_conn.execute("UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id)
     return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
 
+
+@app.post("/mod_ban", tags=["Moderation Endpoint"], response_model=Message)
+async def ban_users(request: fastapi.Request, user: User) -> Message:
+    """Ban users from using the API."""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_user = await db_conn.fetch("SELECT * FROM users WHERE user_id=$1", user.user_id)
+
+    if not db_user:
+        # Raise HTTP 422 (Unprocessable Entity) if user wasn't found
+        raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} does not exist.")
+
+    await db_conn.execute("UPDATE users SET is_banned=TRUE WHERE user_id=$1", user.user_id)
+    return Message(message=f"Successfully banned user_id {user.user_id}")
+
 # endregion
