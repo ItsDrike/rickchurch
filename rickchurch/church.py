@@ -139,7 +139,15 @@ async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)
 
 
 # endregion
-# region: Member Endpoints
+# region: General Endpoints
+
+@app.get("/", include_in_schema=False, tags=["Member endpoint"])
+async def index(request: fastapi.Request) -> fastapi.Response:
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+# endregion
+# region: Member API Endpoints
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
 async def get_projects(request: fastapi.Request) -> List[Project]:
@@ -147,8 +155,6 @@ async def get_projects(request: fastapi.Request) -> List[Project]:
     return await fetch_projects(request.state.db_conn)
 
 
-@app.get("/", include_in_schema=False, tags=["Member endpoint"])
-async def index(request: fastapi.Request) -> fastapi.Response:
-    return templates.TemplateResponse("index.html", {"request": request})
-
+# endregion
+# region: Moderation API endpoints
 # endregion
