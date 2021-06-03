@@ -200,4 +200,24 @@ async def ban_user(request: fastapi.Request, user: User) -> Message:
     await db_conn.execute("UPDATE users SET is_banned=TRUE WHERE user_id=$1", user.user_id)
     return Message(message=f"Successfully banned user_id {user.user_id}")
 
+
+@app.post("/mod_add_project", tags=["Moderation endpoint"], response_model=Message)
+async def add_project(request: fastapi.Request, project: Project) -> Message:
+    """Add a new project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
+
+    if db_project is not None:
+        # Raise HTTP 422 (Unprocessable Entity) if this project already exists
+        raise fastapi.HTTPException(status_code=422, detail=f"Database project {project.name} already exists.")
+
+    await db_conn.execute(
+        """INSERT INTO projects (project_name, position_x, position_y, project_priority, base64_image)
+        VALUES ($1, $2, $3, $4, $5)""",
+        project.name, project.x, project.y, project.priority, project.image
+    )
+    return Message(message=f"Project {project.name} was added successfully.")
+
 # endregion
