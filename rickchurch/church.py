@@ -168,16 +168,18 @@ async def mod_check(request: fastapi.Request) -> Message:
 
 @app.post("/set_mod", tags=["Moderation endpoint"], response_model=Message)
 async def set_mod(request: fastapi.Request, user: User) -> Message:
+    """Make another user a moderator"""
     request.state.auth.raise_unless_mod()
 
     db_conn = request.state.db_conn
     async with db_conn.transaction():
         user_state = await db_conn.fetchrow("SELECT is_mod FROM users WHERE user_id = $1;", user.user_id)
 
+        # Raise HTTP 422 (Unprocessable Entity) if user wasn't found, or is already a mod
         if user_state is None:
-            return Message(message=f"User with user_id {user.user_id} does not exist.")
+            raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} does not exist.")
         elif user_state['is_mod']:
-            return Message(message=f"User with user_id {user.user_id} is already a mod.")
+            raise fastapi.HTTPException(status_code=422, detail=f"User with user_id {user.user_id} is already a mod")
 
         await db_conn.execute("UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id)
     return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
