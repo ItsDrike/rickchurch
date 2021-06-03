@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block subtitle %}API Documentation{% endblock %}
+
+{% block head %}
+    <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+{% endblock %}
+
+{% block body %}
+    <rapi-doc
+        spec-url="/openapi.json"
+        show-header = "false"
+        theme="dark"
+        render-style="read"
+        >
+        <div slot="nav-logo">
+            <img src="{{ url_for('static', path='/rick.png') }}" alt="rick" style="display: block; margin: 0 auto;"></img>
+            <p style="text-align: center;"><b>Church of Rick™</b></p>
+        </div>
+    </rapi-doc>
+{% endblock %}

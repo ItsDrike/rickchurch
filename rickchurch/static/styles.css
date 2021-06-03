@@ -7,8 +7,11 @@ body {
   font-family: comic-sans;
   background: #444444;
   color: #EEEEEE;
-  max-width: 600px;
-  margin: 0 auto;
+}
+
+.home {
+   max-width: 600px;
+   margin: 0 auto;
 }
 
 img {
