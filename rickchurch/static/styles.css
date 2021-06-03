@@ -5,4 +5,26 @@
 
 body {
   font-family: comic-sans;
+  background: #444444;
+  color: #EEEEEE;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+img {
+  height: 100%;
+  width: 200px;
+}
+
+.btn {
+  color: #eeeeee;
+  display: inline-block;
+  background: #208000;
+  text-decoration: none;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.btn:hover {
+  background: #207000;
 }
