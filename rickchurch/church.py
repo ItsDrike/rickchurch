@@ -185,8 +185,8 @@ async def set_mod(request: fastapi.Request, user: User) -> Message:
     return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
 
 
-@app.post("/mod_ban", tags=["Moderation Endpoint"], response_model=Message)
-async def ban_users(request: fastapi.Request, user: User) -> Message:
+@app.post("/mod_ban", tags=["Moderation endpoint"], response_model=Message)
+async def ban_user(request: fastapi.Request, user: User) -> Message:
     """Ban users from using the API."""
     request.state.auth.raise_unless_mod()
 
