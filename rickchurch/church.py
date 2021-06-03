@@ -164,7 +164,7 @@ async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
 # endregion
 # region: Moderation API endpoints
 
-@app.get("/mod", tags=["Moderation Endpoint"], response_model=Message)
+@app.get("/mods/check", tags=["Moderation Endpoint"], response_model=Message)
 async def mod_check(request: fastapi.Request) -> Message:
     """Check if the authenticated user is a mod."""
     request.state.auth.raise_unless_mod()
