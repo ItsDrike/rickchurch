@@ -75,7 +75,7 @@ async def authorized(authorization: Optional[str], asyncpg_conn: asyncpg.Connect
     user_id = token_data["id"]
     token_salt = token_data["salt"]
     user_state = await asyncpg_conn.fetchrow(
-        "SELECT is_banned, is_mod, key_salt, FROM users WHERE user_id = $1;", int(user_id)
+        "SELECT is_banned, is_mod, key_salt FROM users WHERE user_id = $1;", int(user_id)
     )
     if user_state is None or user_state["key_salt"] != token_salt:
         return AuthResult(AuthState.INVALID_TOKEN, None)

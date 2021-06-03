@@ -26,10 +26,34 @@ class Task(pydantic.BaseModel):
             )
 
 
-class Project(pydantic.BaseModel):
+class ProjectDetails(pydantic.BaseModel):
     """A project used by the API."""
     name: str
     x: int
     y: int
     priority: int
     image: str  # base64 encoded image string
+
+
+class Project(pydantic.BaseModel):
+    """Identifiable project. Name is all we need to find any project."""
+    name: str
+
+
+class User(pydantic.BaseModel):
+    """A user as used by the API."""
+
+    user_id: int
+
+    @pydantic.validator("user_id")
+    def user_id_must_be_snowflake(cls, user_id: int) -> int:  # noqa: N805 - method argument should be self
+        """Ensure the user_id is a valid discord snowflake."""
+        if user_id.bit_length() <= 63:
+            return user_id
+        else:
+            raise ValueError("user_id must fit within a 64 bit int.")
+
+
+class Message(pydantic.BaseModel):
+    """An API response message."""
+    message: str
