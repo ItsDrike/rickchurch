@@ -232,9 +232,28 @@ async def remove_project(request: fastapi.Request, project: Project) -> Message:
     db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
 
     if db_project is None:
-        raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exists.")
+        raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
 
     await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
     return Message(message=f"Project {project.name} was added successfully.")
+
+
+@app.put("/mods/project", tags=["Moderation endpoint"], response_model=Message)
+async def put_project(request: fastapi.Request, project: ProjectDetails) -> Message:
+    """Update an existing project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
+
+    if db_project is None:
+        raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
+
+    await db_conn.execute(
+        """UPDATE projects SET project_name=$1, position_x=$2, position_y=$3, project_priority=$4, base64_image=$5
+        WHERE project_name=$1""",
+        project.name, project.x, project.y, project.priority, project.image
+    )
+    return Message(message=f"Project {project.name} was updated successfully.")
 
 # endregion
