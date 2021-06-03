@@ -15,7 +15,7 @@ from rickchurch.models import Project
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
-app = fastapi.FastAPI()
+app = fastapi.FastAPI(docs_url=None, redoc_url=None)
 client: Optional[pydispix.Client] = None
 
 app.mount("/static", StaticFiles(directory="rickchurch/static"), name="static")
@@ -150,5 +150,10 @@ async def get_projects(request: fastapi.Request) -> List[Project]:
 @app.get("/", include_in_schema=False, tags=["Member endpoint"])
 async def index(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/docs", include_in_schema=False, tags=["Member endpoint"])
+async def docs(request: fastapi.Request) -> fastapi.Response:
+    return templates.TemplateResponse("docs.html", {"request": request})
 
 # endregion

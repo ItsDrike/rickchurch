@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Church of Rick • API Documentation{% endblock %}
+
+{% block head %}
+    <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+{% endblock %}
+
+{% block body %}
+    <rapi-doc
+        spec-url="/openapi.json"
+        show-header = "false"
+        theme="dark"
+        render-style="read"
+        >
+        <div slot="nav-logo" style="display: flex; align-items: center; justify-content: center;">
+            <img src="{{ url_for('static', path='/rick.png') }}" alt="rick"></img>
+        </div>
+        <span slot="nav-logo"><b>Church of Rick™</b></span>
+    </rapi-doc>
+{% endblock %}
