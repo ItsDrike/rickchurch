@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<h1>Cookie not found</h1>
+
+<p>We couldn't find the token in your browser cookies. Either the token has expired, or your browser doesn't support cookies.</p>
+<p>You can follow <a href="https://www.whatismybrowser.com/guides/how-to-enable-cookies/" target="_blank">this guide</a> to enable them.</p>
+<p>After you've enabled cookies navigate back to <a href="/authorize">/authorize</a></p>
+
+<img src="/static/cookie-monster-sad.jpg" alt="sad cookie monster"></img>
+
+{% endblock %}
