@@ -220,4 +220,20 @@ async def add_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     )
     return Message(message=f"Project {project.name} was added successfully.")
 
+
+@app.delete("/mod_remove_project", tags=["Moderation endpoint"], response_model=Message)
+async def remove_project(request: fastapi.Request, project: Project) -> Message:
+    """Add a new project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
+
+    if db_project is None:
+        # Raise HTTP 422 (Unprocessable Entity) if this project doesn't exists
+        raise fastapi.HTTPException(status_code=422, detail=f"Database project {project.name} doesn't exists.")
+
+    await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
+    return Message(message=f"Project {project.name} was added successfully.")
+
 # endregion
