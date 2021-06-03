@@ -26,13 +26,18 @@ class Task(pydantic.BaseModel):
             )
 
 
-class Project(pydantic.BaseModel):
+class ProjectDetails(pydantic.BaseModel):
     """A project used by the API."""
     name: str
     x: int
     y: int
     priority: int
     image: str  # base64 encoded image string
+
+
+class Project(pydantic.BaseModel):
+    """Identifiable project. Name is all we need to find any project."""
+    name: str
 
 
 class User(pydantic.BaseModel):

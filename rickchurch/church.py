@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from rickchurch import constants
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
-from rickchurch.models import Message, Project, User
+from rickchurch.models import Message, Project, ProjectDetails, User
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -150,7 +150,7 @@ async def index(request: fastapi.Request) -> fastapi.Response:
 # region: Member API Endpoints
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
-async def get_projects(request: fastapi.Request) -> List[Project]:
+async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
     """Obtain all active project data."""
     request.state.auth.raise_if_failed()
     return await fetch_projects(request.state.db_conn)
@@ -202,7 +202,7 @@ async def ban_user(request: fastapi.Request, user: User) -> Message:
 
 
 @app.post("/mod_add_project", tags=["Moderation endpoint"], response_model=Message)
-async def add_project(request: fastapi.Request, project: Project) -> Message:
+async def add_project(request: fastapi.Request, project: ProjectDetails) -> Message:
     """Add a new project"""
     request.state.auth.raise_unless_mod()
 

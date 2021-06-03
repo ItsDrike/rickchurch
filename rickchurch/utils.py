@@ -5,19 +5,19 @@ import asyncpg
 import httpx
 
 from rickchurch import constants
-from rickchurch.models import Project
+from rickchurch.models import ProjectDetails
 
 logger = logging.getLogger("rickchurch")
 
 
-async def fetch_projects(db_conn: asyncpg.Connection) -> List[Project]:
+async def fetch_projects(db_conn: asyncpg.Connection) -> List[ProjectDetails]:
     """Obtain list of active projects in the database"""
     async with db_conn.transaction():
         db_projects = await db_conn.fetchrow("SELECT * FROM projects")
 
     projects = []
     for db_project in db_projects:
-        project = Project(
+        project = ProjectDetails(
             name=db_project["project_name"],
             x=db_project["position_x"],
             y=db_project["position_y"],
