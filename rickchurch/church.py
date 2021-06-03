@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from rickchurch import constants
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
-from rickchurch.models import Project
+from rickchurch.models import Message, Project, User
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -151,10 +151,28 @@ async def index(request: fastapi.Request) -> fastapi.Response:
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
 async def get_projects(request: fastapi.Request) -> List[Project]:
+    """Obtain all active project data."""
     request.state.auth.raise_if_failed()
     return await fetch_projects(request.state.db_conn)
 
 
 # endregion
 # region: Moderation API endpoints
+
+@app.post("/set_mod", tags=["Moderation endpoint"], response_model=Message)
+async def set_mod(request: fastapi.Request, user: User) -> Message:
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    async with db_conn.transaction():
+        user_state = await db_conn.fetchrow("SELECT is_mod FROM users WHERE user_id = $1;", user.user_id)
+
+        if user_state is None:
+            return Message(message=f"User with user_id {user.user_id} does not exist.")
+        elif user_state['is_mod']:
+            return Message(message=f"User with user_id {user.user_id} is already a mod.")
+
+        await db_conn.execute("UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id)
+    return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
+
 # endregion
