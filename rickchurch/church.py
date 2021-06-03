@@ -149,7 +149,7 @@ async def index(request: fastapi.Request) -> fastapi.Response:
 # endregion
 # region: Member API Endpoints
 
-@app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
+@app.get("/projects", tags=["Member endpoint"], response_model=List[Project])
 async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
     """Obtain all active project data."""
     request.state.auth.raise_if_failed()
@@ -166,7 +166,7 @@ async def mod_check(request: fastapi.Request) -> Message:
     return Message(message="You are a moderator!")
 
 
-@app.post("/set_mod", tags=["Moderation endpoint"], response_model=Message)
+@app.post("/mods/set_mod", tags=["Moderation endpoint"], response_model=Message)
 async def set_mod(request: fastapi.Request, user: User) -> Message:
     """Make another user a moderator"""
     request.state.auth.raise_unless_mod()
@@ -185,7 +185,7 @@ async def set_mod(request: fastapi.Request, user: User) -> Message:
     return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
 
 
-@app.post("/mod_ban", tags=["Moderation endpoint"], response_model=Message)
+@app.post("/mods/ban", tags=["Moderation endpoint"], response_model=Message)
 async def ban_user(request: fastapi.Request, user: User) -> Message:
     """Ban users from using the API."""
     request.state.auth.raise_unless_mod()
@@ -201,7 +201,7 @@ async def ban_user(request: fastapi.Request, user: User) -> Message:
     return Message(message=f"Successfully banned user_id {user.user_id}")
 
 
-@app.post("/mod_add_project", tags=["Moderation endpoint"], response_model=Message)
+@app.post("/mods/project", tags=["Moderation endpoint"], response_model=Message)
 async def add_project(request: fastapi.Request, project: ProjectDetails) -> Message:
     """Add a new project"""
     request.state.auth.raise_unless_mod()
@@ -221,7 +221,7 @@ async def add_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     return Message(message=f"Project {project.name} was added successfully.")
 
 
-@app.delete("/mod_remove_project", tags=["Moderation endpoint"], response_model=Message)
+@app.delete("/mods/project", tags=["Moderation endpoint"], response_model=Message)
 async def remove_project(request: fastapi.Request, project: Project) -> Message:
     """Add a new project"""
     request.state.auth.raise_unless_mod()
