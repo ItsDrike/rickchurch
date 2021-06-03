@@ -7,6 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from httpx import AsyncClient
 
 from rickchurch import constants
 from rickchurch.auth import add_user, authorized
@@ -34,10 +35,7 @@ def custom_openapi() -> Dict[str, Any]:
         routes=app.routes,
     )
     openapi_schema["components"]["securitySchemes"] = {
-        "Bearer": {
-            "type": "http",
-            "scheme": "Bearer"
-        }
+        "Bearer": {"type": "http", "scheme": "Bearer"}
     }
     for route in app.routes:
         # Use getattr as not all routes have this attr
@@ -49,7 +47,9 @@ def custom_openapi() -> Dict[str, Any]:
 
         # For each method the path provides insert the Bearer security type
         for method in methods:
-            openapi_schema["paths"][route_path][method.lower()]["security"] = [{"Bearer": []}]
+            openapi_schema["paths"][route_path][method.lower()]["security"] = [
+                {"Bearer": []}
+            ]
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
@@ -61,6 +61,8 @@ app.openapi = custom_openapi
 @app.on_event("startup")
 async def startup() -> None:
     """Create asyncpg connection pool on startup and setup logging."""
+    app.state.client = AsyncClient()
+
     # We have to make a global client object as there is no way for us to
     # send the objects to the following requests from this function.
     global client
@@ -75,6 +77,7 @@ async def startup() -> None:
 @app.on_event("shutdown")
 async def shutdown() -> None:
     """Close down the app."""
+    await app.state.client.aclose()
     await constants.DB_POOL.close()
 
 
@@ -84,7 +87,9 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
     async with constants.DB_POOL.acquire() as db_connection:
         request.state.db_conn = db_connection
         request.state.client = client
-        request.state.auth = await authorized(request.headers.get("Authorization"), db_connection)
+        request.state.auth = await authorized(
+            request.headers.get("Authorization"), db_connection
+        )
         response = await callnext(request)
     request.state.db_conn = None
     request.state.client = None
@@ -92,6 +97,7 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
 
 
 # region: Discord OAuth2
+
 
 @app.get("/authorize", tags=["Authorization Endpoints"], include_in_schema=False)
 async def authorize() -> fastapi.Response:
@@ -105,28 +111,49 @@ async def authorize() -> fastapi.Response:
 @app.get("/oauth_callback", include_in_schema=False)
 async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     """This endpoint is only used as a redirect target from discord OAuth2."""
+    client = request.app.state.client
     code = request.query_params["code"]
     try:
-        user = await get_oauth_user(code)
+        user, access_token = await get_oauth_user(client, code)
         token = await add_user(user, request.state.db_conn)
     except PermissionError:
         # `add_user` can return `PermissionError` if the user already has a token, which is banned.
         raise fastapi.HTTPException(401, "You are banned")
 
+    # Join them into the rickchurch server
+    res = await client.put(
+        constants.DISCORD_BASE_URL
+        + f"/guilds/{constants.discord_guild_id}"
+        + f"/members/{user['id']}",
+        json={"access_token": access_token},
+        headers={"Authorization": f"Bot {constants.discord_bot_token}"},
+    )
+    if res.status_code not in [200, 201, 204]:
+        try:
+            text = res.text
+        except Exception:
+            logger.exception("Failed getting text of response")
+            text = "<error>"
+        logger.error(
+            f"Joining server for user failed: Code {res.status_code} text {text!r}"
+        )
+
     # Redirect so that a user doesn't refresh the page and spam discord
     redirect = RedirectResponse("/show_token", status_code=303)
     redirect.set_cookie(
-        key='token',
+        key="token",
         value=token,
         httponly=True,
         max_age=10,
-        path='/show_token',
+        path="/show_token",
     )
     return redirect
 
 
 @app.get("/show_token", include_in_schema=False)
-async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)) -> fastapi.Response:  # noqa: B008
+async def show_token(
+    request: fastapi.Request, token: str = fastapi.Cookie(None)  # noqa: B008
+) -> fastapi.Response:
     """Take a token from URL and show it."""
     template_name = "cookie_disabled.html"
     context: dict[str, Any] = {"request": request}
@@ -140,6 +167,7 @@ async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)
 
 # endregion
 # region: Member Endpoints
+
 
 @app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
 async def get_projects(request: fastapi.Request) -> List[Project]:
@@ -155,5 +183,6 @@ async def index(request: fastapi.Request) -> fastapi.Response:
 @app.get("/docs", include_in_schema=False, tags=["Member endpoint"])
 async def docs(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("docs.html", {"request": request})
+
 
 # endregion

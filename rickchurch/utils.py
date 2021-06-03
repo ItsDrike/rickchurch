@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 import asyncpg
-import httpx
+from httpx import AsyncClient
 
 from rickchurch import constants
 from rickchurch.models import Project
@@ -22,13 +22,13 @@ async def fetch_projects(db_conn: asyncpg.Connection) -> List[Project]:
             x=db_project["position_x"],
             y=db_project["position_y"],
             priority=db_project["project_priority"],
-            image=db_project["base64_image"]
+            image=db_project["base64_image"],
         )
         projects.append(project)
     return projects
 
 
-async def get_oauth_user(code: str) -> dict:
+async def get_oauth_user(client: AsyncClient, code: str) -> dict:
     """
     Processes the code given to us by Discord and send it back to Discord
     requesting a temporary access token so we can make requests on behalf
@@ -46,15 +46,17 @@ async def get_oauth_user(code: str) -> dict:
     )
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(constants.discord_token_url, data=params, headers=headers)
-        data = response.json()
-        try:
-            auth_header = {"Authorization": f"Bearer {data['access_token']}"}
-        except KeyError as exc:
-            logger.error(f"Unable to obtain access token (response: {data})")
-            raise exc
-        response = await client.get(constants.discord_user_url, headers=auth_header)
-        user = response.json()
+    response = await client.post(
+        constants.discord_token_url, data=params, headers=headers
+    )
+    data = response.json()
+    try:
+        access_token = data["access_token"]
+    except KeyError as exc:
+        logger.error(f"Unable to obtain access token (response: {data})")
+        raise exc
+    auth_header = {"Authorization": f"Bearer {access_token}"}
+    response = await client.get(constants.discord_user_url, headers=auth_header)
+    user = response.json()
 
-    return user
+    return user, access_token
