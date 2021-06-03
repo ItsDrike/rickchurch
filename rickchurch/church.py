@@ -171,8 +171,8 @@ async def mod_check(request: fastapi.Request) -> Message:
     return Message(message="You are a moderator!")
 
 
-@app.post("/mods/set_mod", tags=["Moderation endpoint"], response_model=Message)
-async def set_mod(request: fastapi.Request, user: User) -> Message:
+@app.post("/mods/promote", tags=["Moderation endpoint"], response_model=Message)
+async def promote_mod(request: fastapi.Request, user: User) -> Message:
     """Make another user a moderator"""
     request.state.auth.raise_unless_mod()
 
@@ -186,7 +186,25 @@ async def set_mod(request: fastapi.Request, user: User) -> Message:
             raise fastapi.HTTPException(status_code=409, detail=f"User with user_id {user.user_id} is already a mod")
 
         await db_conn.execute("UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id)
-    return Message(message=f"Successfully set user with user_id {user.user_id} to mod")
+    return Message(message=f"Successfully promoted user with user_id {user.user_id} to mod")
+
+
+@app.post("/mods/demote", tags=["Moderation endpoint"], response_model=Message)
+async def demote_mod(request: fastapi.Request, user: User) -> Message:
+    """Make another user a moderator"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    async with db_conn.transaction():
+        user_state = await db_conn.fetchrow("SELECT is_mod FROM users WHERE user_id = $1;", user.user_id)
+
+        if user_state is None:
+            raise fastapi.HTTPException(status_code=404, detail=f"User with user_id {user.user_id} does not exist.")
+        elif user_state['is_mod'] is False:
+            raise fastapi.HTTPException(status_code=409, detail=f"User with user_id {user.user_id} isn't a mod.")
+
+        await db_conn.execute("UPDATE users SET is_mod = false WHERE user_id = $1;", user.user_id)
+    return Message(message=f"Successfully demoted user with user_id {user.user_id} to regular user")
 
 
 @app.post("/mods/ban", tags=["Moderation endpoint"], response_model=Message)
