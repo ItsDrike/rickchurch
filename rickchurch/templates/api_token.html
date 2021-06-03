@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block body %}
-  <h2>API token</h2>
+  <h1>Success</h1>
+  <p>You've been added to the church. Here is your API key</p>
   <pre>{{ token }}</pre>
+  <img src="{{ url_for('static', path='cookie-monster.gif') }}" alt="cookie monster eating cookies"></img>
 {% endblock %}

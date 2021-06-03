@@ -1,0 +1,44 @@
+@font-face {
+  font-family: comic-sans;
+  src: url('/static/qdbettercomicsans.ttf');
+}
+
+body {
+  font-family: comic-sans;
+  background: #444444;
+  color: #EEEEEE;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+img {
+  height: 100%;
+  width: 200px;
+}
+
+a {
+  text-decoration: none;
+  color: #20A000;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.btn {
+  color: #EEEEEE;
+  display: inline-block;
+  background: #208000;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.btn:hover {
+  background: #207000;
+}
+
+pre {
+  /* Put the api token on multiple lines */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
