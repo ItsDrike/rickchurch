@@ -12,9 +12,9 @@
         theme="dark"
         render-style="read"
         >
-        <div slot="nav-logo" style="display: flex; align-items: center; justify-content: center;">
-            <img src="{{ url_for('static', path='/rick.png') }}" alt="rick"></img>
+        <div slot="nav-logo">
+            <img src="{{ url_for('static', path='/rick.png') }}" alt="rick" style="display: block; margin: 0 auto;"></img>
+            <p style="text-align: center;"><b>Church of Rick™</b></p>
         </div>
-        <span slot="nav-logo"><b>Church of Rick™</b></span>
     </rapi-doc>
 {% endblock %}
