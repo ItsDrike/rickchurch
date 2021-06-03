@@ -141,7 +141,7 @@ async def show_token(request: fastapi.Request, token: str = fastapi.Cookie(None)
 # endregion
 # region: General Endpoints
 
-@app.get("/", include_in_schema=False, tags=["Member endpoint"])
+@app.get("/", include_in_schema=False, tags=["General endpoint"])
 async def index(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("index.html", {"request": request})
 
