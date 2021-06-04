@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Tuple
 
 import asyncpg
 from httpx import AsyncClient
@@ -28,7 +28,7 @@ async def fetch_projects(db_conn: asyncpg.Connection) -> List[ProjectDetails]:
     return projects
 
 
-async def get_oauth_user(client: AsyncClient, code: str) -> dict:
+async def get_oauth_user(client: AsyncClient, code: str) -> Tuple[dict, str]:
     """
     Processes the code given to us by Discord and send it back to Discord
     requesting a temporary access token so we can make requests on behalf
