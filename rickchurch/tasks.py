@@ -20,8 +20,8 @@ canvas: Optional[pydispix.Canvas] = None
 update_time = float("-inf")  # Unix last update timestamp
 
 
-async def submit_task(task: Task, user_id: int):
-    """Try to submit a `task` from `user_id`"""
+async def submit_task(task: Task, user_id: int) -> None:
+    """Try to submit a `task` from `user_id`, raise 409 on fail."""
     global tasks
 
     submit_time = time.time()
@@ -89,7 +89,7 @@ async def get_fastest_pixel(x: int, y: int, submit_time: float) -> pydispix.Pixe
 
 
 async def assign_free_task(user_id: int) -> Task:
-    """Assign a free task to `user_id`"""
+    """Assign a free task to `user_id`, raise 409 on fail"""
     global tasks
     global free_tasks
 
@@ -109,7 +109,7 @@ async def assign_free_task(user_id: int) -> Task:
     return task
 
 
-def unassign_task(user_id: int):
+def unassign_task(user_id: int) -> None:
     """Unassign given `task` from `user_id` and mark it free to be claimed"""
     global tasks
     global free_tasks
@@ -119,7 +119,7 @@ def unassign_task(user_id: int):
     free_tasks.append(task)
 
 
-async def reload_loop():
+async def reload_loop() -> None:
     """
     Keep continually querying the database to update the list of projects, these updates aren't
     that common, but they happen when a new project is added/removed/edited
@@ -146,7 +146,7 @@ async def reload_loop():
         await asyncio.sleep(constants.task_refresh_time)
 
 
-async def update_tasks():
+async def update_tasks() -> None:
     global free_tasks
     global update_time
     global canvas
