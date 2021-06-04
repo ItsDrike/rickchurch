@@ -132,11 +132,12 @@ async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     # 204: No content: user already in the server
     if res.status_code not in (200, 201, 204):
         try:
-            text = res.text
+            # repr makes sure that no weird characters get printed and also allows
+            #  user to determine between response text of 'N/A' and real N/A
+            text = repr(res.text)
         except Exception:
-            logger.exception("Failed getting text of response")
-            text = "<error>"
-        logger.error(f"Joining server for user failed: Code {res.status_code} text {text!r}")
+            text = "N/A"
+        logger.error(f"Joining server for user failed: Code {res.status_code} text {text}")
 
     # Redirect so that a user doesn't refresh the page and spam discord
     redirect = RedirectResponse("/show_token", status_code=303)
