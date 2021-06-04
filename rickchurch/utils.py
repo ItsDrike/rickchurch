@@ -22,7 +22,7 @@ async def fetch_projects(db_conn: asyncpg.Connection) -> List[ProjectDetails]:
             x=db_project["position_x"],
             y=db_project["position_y"],
             priority=db_project["project_priority"],
-            image=db_project["base64_image"],
+            image=db_project["base64_image"]
         )
         projects.append(project)
     return projects
@@ -44,7 +44,7 @@ async def get_oauth_user(client: AsyncClient, code: str) -> Tuple[dict, str]:
             grant_type="authorization_code",
             code=code,
             redirect_uri=f"{constants.base_url}/oauth_callback",
-            scope="identify",
+            scope="identify"
         ),
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
@@ -56,7 +56,7 @@ async def get_oauth_user(client: AsyncClient, code: str) -> Tuple[dict, str]:
         raise exc
     response = await client.get(
         constants.DISCORD_BASE_URL + "/users/@me",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}"}
     )
     user = response.json()
 
