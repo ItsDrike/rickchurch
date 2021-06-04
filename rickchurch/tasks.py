@@ -1,9 +1,8 @@
 import asyncio
 import random
 from functools import partial
-from typing import Tuple, Union
+from typing import Tuple
 
-import asyncpg
 import fastapi
 import pydispix
 
@@ -68,7 +67,7 @@ def unassign_task(user_id: int):
     free_tasks.append(task)
 
 
-async def reload_loop(db_conn: asyncpg.Connection, reload_time: Union[int, float]):
+async def reload_loop():
     """
     Keep continually querying the database to update the list of projects, these updates aren't
     that common, but they happen when a new project is added/removed/edited
@@ -76,18 +75,22 @@ async def reload_loop(db_conn: asyncpg.Connection, reload_time: Union[int, float
     global projects
 
     while True:
-        db_projects = await db_conn.fetch("SELECT * FROM projects")
+        async with constants.DB_POOL.acquire() as db_conn:
+            db_projects = await db_conn.fetch("SELECT * FROM projects")
+
+        local_projects = []
         for db_project in db_projects:
             project_model = ProjectDetails(
                 name=db_project["project_name"],
                 x=db_project["position_x"],
                 y=db_project["position_y"],
-                priority=db_project["priority"],
+                priority=db_project["project_priority"],
                 image=db_project["base64_image"]
             )
-            projects.append(project_model)
+            local_projects.append(project_model)
 
-        asyncio.sleep(reload_time)
+        projects = local_projects
+        await asyncio.sleep(constants.task_refresh_time)
 
 
 async def update_tasks(client: pydispix.Client):
