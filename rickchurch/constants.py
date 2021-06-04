@@ -15,7 +15,7 @@ client_secret: str = config("CLIENT_SECRET")
 # Get this by adding {base_url}/oauth_callback as URI in the application's OAuth2 section
 oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 
-enable_auto_join: bool = bool(config("ENABLE_DISCORD_AUTOJOIN", ""))
+enable_auto_join: bool = config("ENABLE_DISCORD_AUTOJOIN", default=False, cast=bool)
 discord_guild_id = discord_bot_token = ""
 if enable_auto_join:
     discord_guild_id = config("DISCORD_GUILD_ID")
