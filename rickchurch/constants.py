@@ -3,7 +3,7 @@ import asyncpg
 from decouple import config
 
 
-DISCORD_BASE_URL: str = "https://discord.com/api"
+DISCORD_BASE_URL = "https://discord.com/api"
 
 log_level: str = config("LOG_LEVEL", default="INFO")
 
