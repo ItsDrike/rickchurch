@@ -151,6 +151,12 @@ async def docs(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("docs.html", {"request": request})
 
 
+@app.get("/info", include_in_schema=False, tags=["General endpoint"])
+async def roll(request: fastapi.Request) -> fastapi.Response:
+    """Include a rickroll for good measures"""
+    return RedirectResponse("https://youtu.be/dQw4w9WgXcQ", status_code=303)
+
+
 # endregion
 # region: Member API Endpoints
 
