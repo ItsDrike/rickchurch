@@ -130,7 +130,7 @@ async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     # 200: Success: Misc success
     # 201: Created: user joined the server
     # 204: No content: user already in the server
-    if res.status_code not in [200, 201, 204]:
+    if res.status_code not in (200, 201, 204):
         try:
             text = res.text
         except Exception:
