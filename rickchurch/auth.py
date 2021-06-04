@@ -136,15 +136,12 @@ async def add_user(user: dict, db_conn: asyncpg.Connection) -> str:
 
     token, salt = make_user_token(user_id)
     async with db_conn.transaction():
+        # fmt: off
         await db_conn.execute(
             """INSERT INTO users (user_id, user_name, key_salt, is_mod,
             is_banned, projects_complete) VALUES ($1, $2, $3, $4, $5, $6)""",
-            user_id,
-            user_name,
-            salt,
-            False,
-            False,
-            0,
+            user_id, user_name, salt, False, False, 0
         )
+        # fmt: on
 
     return token
