@@ -34,12 +34,14 @@ def custom_openapi() -> Dict[str, Any]:
         version="1.0.0",
         routes=app.routes,
     )
+    # fmt: off
     openapi_schema["components"]["securitySchemes"] = {
         "Bearer": {
             "type": "http",
             "scheme": "Bearer"
         }
     }
+    # fmt: on
     for route in app.routes:
         # Use getattr as not all routes have this attr
         if not getattr(route, "include_in_schema", False):
@@ -256,11 +258,13 @@ async def add_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     if db_project is not None:
         raise fastapi.HTTPException(status_code=409, detail=f"Database project {project.name} already exists.")
 
+    # fmt: off
     await db_conn.execute(
         """INSERT INTO projects (project_name, position_x, position_y, project_priority, base64_image)
         VALUES ($1, $2, $3, $4, $5)""",
         project.name, project.x, project.y, project.priority, project.image
     )
+    # fmt: on
     return Message(message=f"Project {project.name} was added successfully.")
 
 
@@ -290,11 +294,13 @@ async def put_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     if db_project is None:
         raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
 
+    # fmt: off
     await db_conn.execute(
         """UPDATE projects SET project_name=$1, position_x=$2, position_y=$3, project_priority=$4, base64_image=$5
         WHERE project_name=$1""",
         project.name, project.x, project.y, project.priority, project.image
     )
+    # fmt: on
     return Message(message=f"Project {project.name} was updated successfully.")
 
 

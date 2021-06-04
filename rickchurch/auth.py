@@ -12,6 +12,7 @@ from rickchurch import constants
 
 class AuthState(enum.Enum):
     """Represents possible outcomes of a user attempting to authorize."""
+
     NO_TOKEN = (
         "There is no token provided, provide one in an Authorization header in the format "
         "'Bearer {your token here}' or go to church's home and get one."
@@ -43,6 +44,7 @@ class AuthState(enum.Enum):
 
 class AuthResult(NamedTuple):
     """The possible outcomes of authorization with user id."""
+
     state: AuthState
     user_id: Optional[int]
 
@@ -137,7 +139,12 @@ async def add_user(user: dict, db_conn: asyncpg.Connection) -> str:
         await db_conn.execute(
             """INSERT INTO users (user_id, user_name, key_salt, is_mod,
             is_banned, projects_complete) VALUES ($1, $2, $3, $4, $5, $6)""",
-            user_id, user_name, salt, False, False, 0
+            user_id,
+            user_name,
+            salt,
+            False,
+            False,
+            0,
         )
 
     return token
