@@ -2,7 +2,7 @@
 name = "rickchurch"
 version = "1.0.0"
 description = "API for the Church of Rick"
-authors = ["ItsDrike <itsdrikeofficial@gmail.com>", "Scoder12 <34356756+Scoder12@users.noreply.github.com>", "MaxT <25856189+MaxTCodes@users.noreply.github.com>]
+authors = ["ItsDrike <itsdrikeofficial@gmail.com>", "Scoder12 <34356756+Scoder12@users.noreply.github.com>", "MaxT <25856189+MaxTCodes@users.noreply.github.com>"]
 license = "AGPL"
 
 [tool.poetry.dependencies]
