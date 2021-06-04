@@ -759,7 +759,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pydispix"
-version = "1.1.0"
+version = "1.2.2"
 description = "API wrapper for python-discord's pixels."
 category = "main"
 optional = false
@@ -776,7 +776,7 @@ requests = "~=2.25.1"
 type = "git"
 url = "https://github.com/ItsDrike/pydispix"
 reference = "async"
-resolved_reference = "0a15e765456a1fff2e2530d87e393aa686022ffe"
+resolved_reference = "2ffd42bc2cfa928256c69f88fee1db94f9d1671a"
 
 [[package]]
 name = "pyflakes"
@@ -1094,7 +1094,7 @@ python-versions = ">=3.6.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.*"
-content-hash = "ed7e719440a3fedd3e8956fe3342fd8195dfb173914d18ad8726613e0f6e49b3"
+content-hash = "98ef9fa3b223edc89304782d1992d7e38dc27aca9a44d8a9ee23630fd71c3cb9"
 
 [metadata.files]
 aiofiles = [
