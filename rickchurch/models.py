@@ -25,6 +25,10 @@ class Task(pydantic.BaseModel):
                 "for example FF00ff for purple."
             )
 
+    def __hash__(self):
+        # Make sure same tasks have the same hash, for easy O(1) lookups
+        return hash((self.x, self.y, self.rgb))
+
 
 class ProjectDetails(pydantic.BaseModel):
     """A project used by the API."""

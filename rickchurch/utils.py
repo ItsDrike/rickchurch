@@ -1,8 +1,11 @@
 import asyncio
+import base64
 import inspect
 import logging
+from io import BytesIO
 from typing import Callable, Coroutine, List, Union
 
+import PIL.Image
 import asyncpg
 import httpx
 
@@ -60,6 +63,18 @@ async def get_oauth_user(code: str) -> dict:
         user = response.json()
 
     return user
+
+
+def deserialize_image(base64_string: str) -> PIL.Image.Image:
+    """Convert serialized base64 image string to an actual image"""
+    return PIL.Image.open(BytesIO(base64.b64decode(base64_string)))
+
+
+def serialize_image(image: PIL.Image.Image) -> str:
+    """Convert an actual image into deserialized base64 string"""
+    f = BytesIO()
+    image.save(f, format="PNG")
+    return base64.b64encode(f.getvalue()).decode()
 
 
 async def postpone(seconds: Union[int, float], coro: Coroutine, predicate: Callable):
