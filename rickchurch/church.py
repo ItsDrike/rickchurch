@@ -112,10 +112,10 @@ async def authorize() -> fastapi.Response:
 @app.get("/oauth_callback", include_in_schema=False)
 async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     """This endpoint is only used as a redirect target from discord OAuth2."""
-    httpx_client = request.app.state.httpx_client
+    httpx_client: AsyncClient = request.app.state.httpx_client
     code = request.query_params["code"]
     try:
-        user, access_token = await get_oauth_user(client, code)
+        user, access_token = await get_oauth_user(httpx_client, code)
         token = await add_user(user, request.state.db_conn)
     except PermissionError:
         # `add_user` can return `PermissionError` if the user already has a token, which is banned.
