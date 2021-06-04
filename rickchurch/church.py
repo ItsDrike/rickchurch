@@ -11,7 +11,8 @@ from fastapi.templating import Jinja2Templates
 from rickchurch import constants
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
-from rickchurch.models import Message, Project, ProjectDetails, User
+from rickchurch.models import Message, Project, ProjectDetails, Task, User
+from rickchurch.tasks import assign_free_task, submit_task
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -159,6 +160,21 @@ async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
     """Obtain all active project data."""
     request.state.auth.raise_if_failed()
     return await fetch_projects(request.state.db_conn)
+
+
+@app.get("/task", tags=["Member endpoint"], response_model=Task)
+async def get_task(request: fastapi.Request) -> Task:
+    request.state.auth.raise_if_failed()
+    user_id = request.state.auth.user_id
+    return await assign_free_task(user_id)
+
+
+@app.post("/task", tags=["Member endpoint"], response_model=Message)
+async def post_task(request: fastapi.Request, task: Task) -> Message:
+    request.state.auth.raise_if_failed()
+    user_id = request.state.auth.user_id
+    submit_task(task, user_id)
+    return Message(message="Task submitted successfully.")
 
 
 # endregion

@@ -1,5 +1,7 @@
+import asyncio
+import inspect
 import logging
-from typing import List
+from typing import Callable, Coroutine, List, Union
 
 import asyncpg
 import httpx
@@ -58,3 +60,16 @@ async def get_oauth_user(code: str) -> dict:
         user = response.json()
 
     return user
+
+
+async def postpone(seconds: Union[int, float], coro: Coroutine, predicate: Callable):
+    try:
+        await asyncio.sleep(seconds)
+        if predicate is True:
+            # Prevent `coro` from cancelling itself by shielding it
+            await asyncio.shield(coro)
+    finally:
+        # Prevent coroutine never awaited error if it got cancelled during sleep
+        # But only do so if it wasn't awaited yet, since the coro can also cancel itself
+        if inspect.getcoroutinestate(coro) == "CORO_CREATED":
+            coro.close()
