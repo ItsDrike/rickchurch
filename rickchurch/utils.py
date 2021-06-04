@@ -36,18 +36,17 @@ async def get_oauth_user(client: AsyncClient, code: str) -> dict:
     https://discordapp.com/api/users/@me (constants.discord_user_url) and
     return the JSON data obtained.
     """
-    params = dict(
-        client_id=constants.client_id,
-        client_secret=constants.client_secret,
-        grant_type="authorization_code",
-        code=code,
-        redirect_uri=f"{constants.base_url}/oauth_callback",
-        scope="identify",
-    )
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
     response = await client.post(
-        constants.discord_token_url, data=params, headers=headers
+        constants.discord_token_url,
+        data=dict(
+            client_id=constants.client_id,
+            client_secret=constants.client_secret,
+            grant_type="authorization_code",
+            code=code,
+            redirect_uri=f"{constants.base_url}/oauth_callback",
+            scope="identify",
+        ),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     data = response.json()
     try:
@@ -55,8 +54,10 @@ async def get_oauth_user(client: AsyncClient, code: str) -> dict:
     except KeyError as exc:
         logger.error(f"Unable to obtain access token (response: {data})")
         raise exc
-    auth_header = {"Authorization": f"Bearer {access_token}"}
-    response = await client.get(constants.discord_user_url, headers=auth_header)
+    response = await client.get(
+        constants.DISCORD_BASE_URL + "/users/@me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
     user = response.json()
 
     return user, access_token

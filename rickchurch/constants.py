@@ -3,13 +3,11 @@ import asyncpg
 from decouple import config
 
 
+DISCORD_BASE_URL: str = "https://discord.com/api"
+
 log_level: str = config("LOG_LEVEL", default="INFO")
 
 base_url: str = config("BASE_URL")  # URL to host church of rick
-discord_token_url: str = config(
-    "TOKEN_URL", default="https://discord.com/api/oauth2/token"
-)
-discord_user_url: str = config("USER_URL", default="https://discord.com/api/users/@me")
 
 # Get these from https://discord.com/developers/applications, OAuth2 section
 client_id: str = config("CLIENT_ID")
@@ -34,5 +32,3 @@ DB_POOL = asyncpg.create_pool(
 
 with open("rickchurch/resources/mods.txt") as f:
     mods = [int(entry) for entry in f.read().split()]
-
-DISCORD_BASE_URL: str = "https://discord.com/api"
