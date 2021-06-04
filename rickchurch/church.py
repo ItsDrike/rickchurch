@@ -12,7 +12,7 @@ from httpx import AsyncClient
 from rickchurch import constants
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
-from rickchurch.models import Project
+from rickchurch.models import Message, Project, ProjectDetails, User
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -166,23 +166,190 @@ async def show_token(
 
 
 # endregion
-# region: Member Endpoints
+# region: General Endpoints
 
 
-@app.get("/get_projects", tags=["Member endpoint"], response_model=List[Project])
-async def get_projects(request: fastapi.Request) -> List[Project]:
-    request.state.auth.raise_if_failed()
-    return await fetch_projects(request.state.db_conn)
-
-
-@app.get("/", include_in_schema=False, tags=["Member endpoint"])
+@app.get("/", include_in_schema=False, tags=["General endpoint"])
 async def index(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/docs", include_in_schema=False, tags=["Member endpoint"])
+@app.get("/docs", include_in_schema=False, tags=["General endpoint"])
 async def docs(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("docs.html", {"request": request})
+
+
+# endregion
+# region: Member API Endpoints
+
+
+@app.get("/projects", tags=["Member endpoint"], response_model=List[Project])
+async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
+    """Obtain all active project data."""
+    request.state.auth.raise_if_failed()
+    return await fetch_projects(request.state.db_conn)
+
+
+# endregion
+# region: Moderation API endpoints
+
+
+@app.get("/mods/check", tags=["Moderation Endpoint"], response_model=Message)
+async def mod_check(request: fastapi.Request) -> Message:
+    """Check if the authenticated user is a mod."""
+    request.state.auth.raise_unless_mod()
+    return Message(message="You are a moderator!")
+
+
+@app.post("/mods/promote", tags=["Moderation endpoint"], response_model=Message)
+async def promote_mod(request: fastapi.Request, user: User) -> Message:
+    """Make another user a moderator"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    async with db_conn.transaction():
+        user_state = await db_conn.fetchrow(
+            "SELECT is_mod FROM users WHERE user_id = $1;", user.user_id
+        )
+
+        if user_state is None:
+            raise fastapi.HTTPException(
+                status_code=404,
+                detail=f"User with user_id {user.user_id} does not exist.",
+            )
+        elif user_state["is_mod"]:
+            raise fastapi.HTTPException(
+                status_code=409,
+                detail=f"User with user_id {user.user_id} is already a mod",
+            )
+
+        await db_conn.execute(
+            "UPDATE users SET is_mod = true WHERE user_id = $1;", user.user_id
+        )
+    return Message(
+        message=f"Successfully promoted user with user_id {user.user_id} to mod"
+    )
+
+
+@app.post("/mods/demote", tags=["Moderation endpoint"], response_model=Message)
+async def demote_mod(request: fastapi.Request, user: User) -> Message:
+    """Make another user a moderator"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    async with db_conn.transaction():
+        user_state = await db_conn.fetchrow(
+            "SELECT is_mod FROM users WHERE user_id = $1;", user.user_id
+        )
+
+        if user_state is None:
+            raise fastapi.HTTPException(
+                status_code=404,
+                detail=f"User with user_id {user.user_id} does not exist.",
+            )
+        elif user_state["is_mod"] is False:
+            raise fastapi.HTTPException(
+                status_code=409, detail=f"User with user_id {user.user_id} isn't a mod."
+            )
+
+        await db_conn.execute(
+            "UPDATE users SET is_mod = false WHERE user_id = $1;", user.user_id
+        )
+    return Message(
+        message=f"Successfully demoted user with user_id {user.user_id} to regular user"
+    )
+
+
+@app.post("/mods/ban", tags=["Moderation endpoint"], response_model=Message)
+async def ban_user(request: fastapi.Request, user: User) -> Message:
+    """Ban users from using the API."""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_user = await db_conn.fetch("SELECT * FROM users WHERE user_id=$1", user.user_id)
+
+    if not db_user:
+        raise fastapi.HTTPException(
+            status_code=404, detail=f"User with user_id {user.user_id} does not exist."
+        )
+
+    await db_conn.execute(
+        "UPDATE users SET is_banned=TRUE WHERE user_id=$1", user.user_id
+    )
+    return Message(message=f"Successfully banned user_id {user.user_id}")
+
+
+@app.post("/mods/project", tags=["Moderation endpoint"], response_model=Message)
+async def add_project(request: fastapi.Request, project: ProjectDetails) -> Message:
+    """Add a new project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow(
+        "SELECT * FROM projects WHERE project_name=$1", project.name
+    )
+
+    if db_project is not None:
+        raise fastapi.HTTPException(
+            status_code=409, detail=f"Database project {project.name} already exists."
+        )
+
+    await db_conn.execute(
+        """INSERT INTO projects (project_name, position_x, position_y, project_priority, base64_image)
+        VALUES ($1, $2, $3, $4, $5)""",
+        project.name,
+        project.x,
+        project.y,
+        project.priority,
+        project.image,
+    )
+    return Message(message=f"Project {project.name} was added successfully.")
+
+
+@app.delete("/mods/project", tags=["Moderation endpoint"], response_model=Message)
+async def remove_project(request: fastapi.Request, project: Project) -> Message:
+    """Add a new project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow(
+        "SELECT * FROM projects WHERE project_name=$1", project.name
+    )
+
+    if db_project is None:
+        raise fastapi.HTTPException(
+            status_code=404, detail=f"Database project {project.name} doesn't exist."
+        )
+
+    await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
+    return Message(message=f"Project {project.name} was added successfully.")
+
+
+@app.put("/mods/project", tags=["Moderation endpoint"], response_model=Message)
+async def put_project(request: fastapi.Request, project: ProjectDetails) -> Message:
+    """Update an existing project"""
+    request.state.auth.raise_unless_mod()
+
+    db_conn = request.state.db_conn
+    db_project = await db_conn.fetchrow(
+        "SELECT * FROM projects WHERE project_name=$1", project.name
+    )
+
+    if db_project is None:
+        raise fastapi.HTTPException(
+            status_code=404, detail=f"Database project {project.name} doesn't exist."
+        )
+
+    await db_conn.execute(
+        """UPDATE projects SET project_name=$1, position_x=$2, position_y=$3, project_priority=$4, base64_image=$5
+        WHERE project_name=$1""",
+        project.name,
+        project.x,
+        project.y,
+        project.priority,
+        project.image,
+    )
+    return Message(message=f"Project {project.name} was updated successfully.")
 
 
 # endregion
