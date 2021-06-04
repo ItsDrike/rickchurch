@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
@@ -8,11 +9,10 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from rickchurch import constants
+from rickchurch import constants, tasks
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
 from rickchurch.models import Message, Project, ProjectDetails, Task, User
-from rickchurch.tasks import assign_free_task, submit_task
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -71,6 +71,11 @@ async def startup() -> None:
 
     # Initialize DB connection
     await constants.DB_POOL
+
+    # Start refreshing tasks
+    asyncio.create_task(tasks.reload_loop())
+    # Update the task list
+    await tasks.update_tasks(client)
 
 
 @app.on_event("shutdown")
@@ -166,14 +171,14 @@ async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
 async def get_task(request: fastapi.Request) -> Task:
     request.state.auth.raise_if_failed()
     user_id = request.state.auth.user_id
-    return await assign_free_task(user_id)
+    return await tasks.assign_free_task(user_id)
 
 
 @app.post("/task", tags=["Member endpoint"], response_model=Message)
 async def post_task(request: fastapi.Request, task: Task) -> Message:
     request.state.auth.raise_if_failed()
     user_id = request.state.auth.user_id
-    submit_task(task, user_id)
+    tasks.submit_task(task, user_id)
     return Message(message="Task submitted successfully.")
 
 
