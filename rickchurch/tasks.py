@@ -1,7 +1,8 @@
 import asyncio
 import random
+import time
 from functools import partial
-from typing import Tuple
+from typing import Optional, Tuple
 
 import fastapi
 import pydispix
@@ -15,11 +16,15 @@ from rickchurch.utils import deserialize_image, postpone
 tasks = {}
 free_tasks = []
 projects = []
+canvas: Optional[pydispix.Canvas] = None
+update_time: float = float("-inf")  # Unix last update timestamp
 
 
-def submit_task(task: Task, user_id: int):
+async def submit_task(task: Task, user_id: int):
     """Try to submit a `task` from `user_id`"""
     global tasks
+
+    submit_time = time.time()
 
     if task not in tasks.values():
         raise fastapi.HTTPException(
@@ -31,6 +36,17 @@ def submit_task(task: Task, user_id: int):
             status_code=409,
             detail="This task doesn't belong to you, "
                    "it has likely been reassigned since you took too long to complete it."
+        )
+
+    # Wait until we obtain up to date canvas
+    while update_time < submit_time:
+        # TODO: If the wait time for whole canvas reloading would prove to be too long
+        await asyncio.sleep(0.1)
+
+    if canvas[task.x, task.y] != task.rgb:
+        raise fastapi.HTTPException(
+            status_code=409,
+            detail="Validation error, you didn't actually complete this task"
         )
 
     del tasks[user_id]
@@ -90,13 +106,16 @@ async def reload_loop():
             local_projects.append(project_model)
 
         projects = local_projects
+        await update_tasks()
         await asyncio.sleep(constants.task_refresh_time)
 
 
-async def update_tasks(client: pydispix.Client):
+async def update_tasks():
     global free_tasks
+    global update_time
+    global canvas
 
-    canvas = await client.get_canvas()
+    canvas = await constants.CLIENT.get_canvas()
 
     local_tasks = []
     for project in projects:
@@ -124,3 +143,5 @@ async def update_tasks(client: pydispix.Client):
         if task in active_tasks:
             continue
         free_tasks.append(task)
+
+    update_time = time.time()

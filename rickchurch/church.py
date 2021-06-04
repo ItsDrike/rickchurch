@@ -62,11 +62,6 @@ app.openapi = custom_openapi
 @app.on_event("startup")
 async def startup() -> None:
     """Create asyncpg connection pool on startup and setup logging."""
-    # We have to make a global client object as there is no way for us to
-    # send the objects to the following requests from this function.
-    global client
-    client = pydispix.Client(constants.pixels_api_token)
-
     setup_logging(constants.log_level)
 
     # Initialize DB connection
@@ -74,8 +69,6 @@ async def startup() -> None:
 
     # Start refreshing tasks
     asyncio.create_task(tasks.reload_loop())
-    # Update the task list
-    await tasks.update_tasks(client)
 
 
 @app.on_event("shutdown")
@@ -178,7 +171,7 @@ async def get_task(request: fastapi.Request) -> Task:
 async def post_task(request: fastapi.Request, task: Task) -> Message:
     request.state.auth.raise_if_failed()
     user_id = request.state.auth.user_id
-    tasks.submit_task(task, user_id)
+    await tasks.submit_task(task, user_id)
     return Message(message="Task submitted successfully.")
 
 

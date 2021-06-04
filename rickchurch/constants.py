@@ -1,5 +1,6 @@
 # type: ignore - config function gives str|bool|Unknown, we specify it with type-hint
 import asyncpg
+import pydispix
 from decouple import config
 
 
@@ -31,6 +32,8 @@ DB_POOL = asyncpg.create_pool(
     min_size=min_pool_size,
     max_size=max_pool_size
 )
+
+CLIENT = pydispix.Client(pixels_api_token)
 
 with open("rickchurch/resources/mods.txt") as f:
     mods = [int(entry) for entry in f.read().split()]
