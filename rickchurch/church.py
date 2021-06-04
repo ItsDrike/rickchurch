@@ -121,23 +121,24 @@ async def auth_callback(request: fastapi.Request) -> fastapi.Response:
         # `add_user` can return `PermissionError` if the user already has a token, which is banned.
         raise fastapi.HTTPException(401, "You are banned")
 
-    # Join them into the rickchurch server
-    res = await client.put(
-        f"{constants.DISCORD_BASE_URL}/guilds/{constants.discord_guild_id}/members/{user['id']}",
-        json={"access_token": access_token},
-        headers={"Authorization": f"Bot {constants.discord_bot_token}"},
-    )
-    # 200: Success: Misc success
-    # 201: Created: user joined the server
-    # 204: No content: user already in the server
-    if res.status_code not in (200, 201, 204):
-        try:
-            # repr makes sure that no weird characters get printed and also allows
-            #  user to determine between response text of 'N/A' and real N/A
-            text = repr(res.text)
-        except Exception:
-            text = "N/A"
-        logger.error(f"Joining server for user failed: Code {res.status_code} text {text}")
+    if constants.enable_auto_join:
+        # TODO: Make this a fastapi background task?
+        res = await client.put(
+            f"{constants.DISCORD_BASE_URL}/guilds/{constants.discord_guild_id}/members/{user['id']}",
+            json={"access_token": access_token},
+            headers={"Authorization": f"Bot {constants.discord_bot_token}"},
+        )
+        # 200: Success: Misc success
+        # 201: Created: user joined the server
+        # 204: No content: user already in the server
+        if res.status_code not in (200, 201, 204):
+            try:
+                # repr makes sure that no weird characters get printed and also allows
+                #  user to determine between response text of 'N/A' and real N/A
+                text = repr(res.text)
+            except Exception:
+                text = "N/A"
+            logger.error(f"Joining server for user failed: Code {res.status_code} text {text}")
 
     # Redirect so that a user doesn't refresh the page and spam discord
     redirect = RedirectResponse("/show_token", status_code=303)
