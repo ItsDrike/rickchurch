@@ -45,3 +45,10 @@ split_before_logical_operator = true
 [tool.isort]
 py_version = "py38"
 line_length = 120
+
+[tool.autopep8]
+max_line_length = 120
+ignore = "E501"
+in-place = true
+recursive = true
+aggressive = 3 # Change if you don't want it making anything more than whitespace changes.
