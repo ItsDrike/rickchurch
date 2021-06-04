@@ -37,7 +37,7 @@ async def get_oauth_user(client: AsyncClient, code: str) -> dict:
     return the JSON data obtained.
     """
     response = await client.post(
-        constants.discord_token_url,
+        constants.DISCORD_BASE_URL + "/oauth2/token",
         data=dict(
             client_id=constants.client_id,
             client_secret=constants.client_secret,
