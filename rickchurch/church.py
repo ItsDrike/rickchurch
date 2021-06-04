@@ -121,7 +121,7 @@ async def auth_callback(request: fastapi.Request) -> fastapi.Response:
 
     # Join them into the rickchurch server
     res = await client.put(
-        constants.DISCORD_BASE_URL + f"/guilds/{constants.discord_guild_id}" + f"/members/{user['id']}",
+        f"{constants.DISCORD_BASE_URL}/guilds/{constants.discord_guild_id}/members/{user['id']}",
         json={"access_token": access_token},
         headers={"Authorization": f"Bot {constants.discord_bot_token}"},
     )
@@ -239,9 +239,7 @@ async def ban_user(request: fastapi.Request, user: User) -> Message:
     db_user = await db_conn.fetch("SELECT * FROM users WHERE user_id=$1", user.user_id)
 
     if not db_user:
-        raise fastapi.HTTPException(
-            status_code=404, detail=f"User with user_id {user.user_id} does not exist."
-        )
+        raise fastapi.HTTPException(status_code=404, detail=f"User with user_id {user.user_id} does not exist.")
 
     await db_conn.execute("UPDATE users SET is_banned=TRUE WHERE user_id=$1", user.user_id)
     return Message(message=f"Successfully banned user_id {user.user_id}")
@@ -261,7 +259,7 @@ async def add_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     await db_conn.execute(
         """INSERT INTO projects (project_name, position_x, position_y, project_priority, base64_image)
         VALUES ($1, $2, $3, $4, $5)""",
-        project.name, project.x, project.y, project.priority, project.image,
+        project.name, project.x, project.y, project.priority, project.image
     )
     return Message(message=f"Project {project.name} was added successfully.")
 
@@ -290,14 +288,12 @@ async def put_project(request: fastapi.Request, project: ProjectDetails) -> Mess
     db_project = await db_conn.fetchrow("SELECT * FROM projects WHERE project_name=$1", project.name)
 
     if db_project is None:
-        raise fastapi.HTTPException(
-            status_code=404, detail=f"Database project {project.name} doesn't exist."
-        )
+        raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
 
     await db_conn.execute(
         """UPDATE projects SET project_name=$1, position_x=$2, position_y=$3, project_priority=$4, base64_image=$5
         WHERE project_name=$1""",
-        project.name, project.x, project.y, project.priority, project.image,
+        project.name, project.x, project.y, project.priority, project.image
     )
     return Message(message=f"Project {project.name} was updated successfully.")
 
