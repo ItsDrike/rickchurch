@@ -16,10 +16,8 @@ client_secret: str = config("CLIENT_SECRET")
 oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 
 enable_auto_join: bool = config("ENABLE_DISCORD_AUTOJOIN", default=False, cast=bool)
-discord_guild_id = discord_bot_token = ""
-if enable_auto_join:
-    discord_guild_id = config("DISCORD_GUILD_ID")
-    discord_bot_token = config("DISCORD_BOT_TOKEN")
+discord_guild_id: str = config("DISCORD_GUILD_ID") if enable_auto_join else ""
+discord_bot_token: str = config("DISCORD_BOT_TOKEN") if enable_auto_join else ""
 
 jwt_secret: str = config("JWT_SECRET")
 pixels_api_token: str = config("PIXELS_API_TOKEN")
