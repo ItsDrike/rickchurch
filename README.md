@@ -22,6 +22,12 @@ To run your own development testing version of the API, follow these steps:
 7. Set `JWT_SECRET` variable to some secret, this will be used to encode the JWT tokens, make sure it's secure enough
 8. Set `PIXELS_API_TOKEN` variable, this will be the token you got from the [official python-discord's webpage](https://pixels.pythondiscord.com/info/)
 9. You can also set `LOG_LEVEL` variable, to control the logging level that should be used, this defaults to `INFO`, set it to `DEBUG` if you need to
+10. To enable automatic joining of users into your discord guild, create a bot user in
+    the same discord application you used for OAuth and invite it to the guild you want
+    to use. Next, set `ENABLE_DISCORD_AUTOJOIN` to `1`, `DISCORD_GUILD_ID` to the ID of
+    the guild you want to use, and `DISCORD_BOT_TOKEN` to the token of your discord bot.
+11. Refer to `rickchurch/constants.py` for more information on how to configure the
+    application.
 
 ### Setup the running environment
 
@@ -30,10 +36,8 @@ _Note: this guide is meant for linux, if you're on windows, search how to run do
 
 1. Install docker, specifically `docker-compose`. (I won't detail this, for Arch Linux it's `pacman -S docker-compose`)
 2. Go to the into the root of the repository. (`cd /path/to/rickchurch`)
-3. Configure the app using environment variables or a .env file in the root of the repository.
-   See `rickchurch/constants.py` for the required environment variables.
-4. Simply run `docker-compose up` (you might need `sudo`)
-5. The API is now running at `localhost:8000`, and if you need to access the postgresql database, it's at `localhost:5000`
+3. Simply run `docker-compose up` (you might need `sudo`)
+4. The API is now running at `localhost:8000`, and if you need to access the postgresql database, it's at `localhost:5000`
 
 If you need to run production server on bare-metal, you will have to setup PostgreSQL database on your own. ([Guide for Arch Linux](https://wiki.archlinux.org/title/PostgreSQL))
 After you're done, set `DATABASE_URL` env variable pointing to it (see example in [docker-compose.yml](docker-compose.yml)).
