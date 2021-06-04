@@ -19,8 +19,10 @@ oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 jwt_secret: str = config("JWT_SECRET")
 pixels_api_token: str = config("PIXELS_API_TOKEN")
 
-task_pending_delay: int = config("TASK_PENDING_DELAY", default=5, cast=int)
-task_refresh_time: int = config("TASK_REFRESH_TIME", default=5, cast=int)
+# How long should a task stay assigned to the user who requested it (seconds)
+task_pending_delay: float = config("TASK_PENDING_DELAY", default=5.0, cast=float)
+# How often should we refresh all tasks from database and refetch the canvas (seconds)
+task_refresh_time: float = config("TASK_REFRESH_TIME", default=2.0, cast=float)
 
 # PostgreSQL Database
 database_url: str = config("DATABASE_URL")
