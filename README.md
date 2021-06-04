@@ -26,12 +26,14 @@ To run your own development testing version of the API, follow these steps:
 ### Setup the running environment
 
 You can use the `docker-compose` which is more than sufficient for testing:
-*Note: this guide is meant for linux, if you're on windows, search how to run docker-compose there*
+_Note: this guide is meant for linux, if you're on windows, search how to run docker-compose there_
 
 1. Install docker, specifically `docker-compose`. (I won't detail this, for Arch Linux it's `pacman -S docker-compose`)
 2. Go to the into the root of the repository. (`cd /path/to/rickchurch`)
-3. Simply run `docker-compose up` (you might need `sudo`)
-4. The API is now running at `localhost:8000`, and if you need to access the postgresql database, it's at `localhost:5000`
+3. Configure the app using environment variables or a .env file in the root of the repository.
+   See `rickchurch/constants.py` for the required environment variables.
+4. Simply run `docker-compose up` (you might need `sudo`)
+5. The API is now running at `localhost:8000`, and if you need to access the postgresql database, it's at `localhost:5000`
 
 If you need to run production server on bare-metal, you will have to setup PostgreSQL database on your own. ([Guide for Arch Linux](https://wiki.archlinux.org/title/PostgreSQL))
 After you're done, set `DATABASE_URL` env variable pointing to it (see example in [docker-compose.yml](docker-compose.yml)).
