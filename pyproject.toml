@@ -2,7 +2,7 @@
 name = "rickchurch"
 version = "1.0.0"
 description = "API for the Church of Rick"
-authors = ["ItsDrike <itsdrikeofficial@gmail.com>", "Scoder12 <34356756+Scoder12@users.noreply.github.com>"]
+authors = ["ItsDrike <itsdrikeofficial@gmail.com>", "Scoder12 <34356756+Scoder12@users.noreply.github.com>", "MaxT <25856189+MaxTCodes@users.noreply.github.com>"]
 license = "AGPL"
 
 [tool.poetry.dependencies]
@@ -32,3 +32,23 @@ build-backend = "poetry.core.masonry.api"
 [tool.taskipy.tasks]
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.yapf]
+based_on_style = "pep8"
+spaces_before_comment = 4
+split_before_logical_operator = true
+
+[tool.isort]
+py_version = "py38"
+line_length = 120
+
+[tool.autopep8]
+max_line_length = 120
+ignore = "E501"
+in-place = true
+recursive = true
+aggressive = 3 # Change if you don't want it making anything more than whitespace changes.
