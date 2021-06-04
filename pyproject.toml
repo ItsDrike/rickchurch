@@ -32,3 +32,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.taskipy.tasks]
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
