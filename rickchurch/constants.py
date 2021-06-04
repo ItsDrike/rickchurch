@@ -15,7 +15,7 @@ client_secret: str = config("CLIENT_SECRET")
 # Get this by adding {base_url}/oauth_callback as URI in the application's OAuth2 section
 oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 
-discord_guild_id: str = config("DISCORD_GUILD_ID", default="849299937485127701")
+discord_guild_id: str = config("DISCORD_GUILD_ID")
 discord_bot_token: str = config("DISCORD_BOT_TOKEN")
 
 jwt_secret: str = config("JWT_SECRET")
