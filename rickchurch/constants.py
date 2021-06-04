@@ -17,7 +17,6 @@ client_secret: str = config("CLIENT_SECRET")
 oauth_redirect_url: str = config("OAUTH_REDIRECT_URL")
 
 jwt_secret: str = config("JWT_SECRET")
-pixels_api_token: str = config("PIXELS_API_TOKEN")
 
 # How long should a task stay assigned to the user who requested it (seconds)
 task_pending_delay: float = config("TASK_PENDING_DELAY", default=5.0, cast=float)
@@ -35,7 +34,7 @@ DB_POOL = asyncpg.create_pool(
     max_size=max_pool_size
 )
 
-CLIENT = pydispix.Client(pixels_api_token)
+CLIENT = pydispix.Client(config("PIXELS_API_TOKEN"))
 
 with open("rickchurch/resources/mods.txt") as f:
     mods = [int(entry) for entry in f.read().split()]
