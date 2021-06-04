@@ -64,7 +64,7 @@ app.openapi = custom_openapi
 @app.on_event("startup")
 async def startup() -> None:
     """Create asyncpg connection pool on startup and setup logging."""
-    app.state.client = AsyncClient()
+    app.state.httpx_client = AsyncClient()
 
     # We have to make a global client object as there is no way for us to
     # send the objects to the following requests from this function.
@@ -80,7 +80,7 @@ async def startup() -> None:
 @app.on_event("shutdown")
 async def shutdown() -> None:
     """Close down the app."""
-    await app.state.client.aclose()
+    await app.state.httpx_client.aclose()
     await constants.DB_POOL.close()
 
 
@@ -89,11 +89,11 @@ async def setup_data(request: fastapi.Request, callnext: Callable) -> fastapi.Re
     """Get a connection from the pool and a canvas reference for this request."""
     async with constants.DB_POOL.acquire() as db_connection:
         request.state.db_conn = db_connection
-        request.state.client = client
+        request.state.db_client = client
         request.state.auth = await authorized(request.headers.get("Authorization"), db_connection)
         response = await callnext(request)
     request.state.db_conn = None
-    request.state.client = None
+    request.state.db_client = None
     return response
 
 
@@ -112,7 +112,7 @@ async def authorize() -> fastapi.Response:
 @app.get("/oauth_callback", include_in_schema=False)
 async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     """This endpoint is only used as a redirect target from discord OAuth2."""
-    client = request.app.state.client
+    httpx_client = request.app.state.httpx_client
     code = request.query_params["code"]
     try:
         user, access_token = await get_oauth_user(client, code)
@@ -123,7 +123,7 @@ async def auth_callback(request: fastapi.Request) -> fastapi.Response:
 
     if constants.enable_auto_join:
         # TODO: Make this a fastapi background task?
-        res = await client.put(
+        res = await httpx_client.put(
             f"{constants.DISCORD_BASE_URL}/guilds/{constants.discord_guild_id}/members/{user['id']}",
             json={"access_token": access_token},
             headers={"Authorization": f"Bot {constants.discord_bot_token}"},
