@@ -29,7 +29,7 @@ class AuthState(enum.Enum):
 
     def raise_if_failed(self) -> None:
         """Raise an HTTPException if a user isn't authorized."""
-        if self:
+        if bool(self):
             return
         raise fastapi.HTTPException(status_code=403, detail=self.value)
 
