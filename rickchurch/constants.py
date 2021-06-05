@@ -34,7 +34,7 @@ max_pool_size: int = config("MAX_POOL_SIZE", cast=int, default=5)
 # Awaited in application startup
 DB_POOL = asyncpg.create_pool(database_url, min_size=min_pool_size, max_size=max_pool_size)
 
-CLIENT = pydispix.Client(config("PIXELS_API_TOKEN"))
+PYDISPIX_CLIENT = pydispix.Client(config("PIXELS_API_TOKEN"))
 
 with open("rickchurch/resources/mods.txt") as f:
     mods = [int(entry) for entry in f.read().split()]

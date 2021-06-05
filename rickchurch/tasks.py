@@ -68,19 +68,19 @@ async def get_fastest_pixel(x: int, y: int, submit_time: float) -> pydispix.Pixe
         # we can just wait it out if it's not too long
 
         # Check if expected time for use get_pixel endpoint wouldn't be lower
-        url = constants.CLIENT.resolve_endpoint("/get_pixel")
+        url = constants.PYDISPIX_CLIENT.resolve_endpoint("/get_pixel")
         # TODO: Waiting on pydispix update, make_raw_request needs to use httpx/async
-        constants.CLIENT.make_raw_request(
+        constants.PYDISPIX_CLIENT.make_raw_request(
             "HEAD", url,
-            headers=constants.CLIENT.headers,
+            headers=constants.PYDISPIX_CLIENT.headers,
             update_rate_limits=True
         )
-        wait_time = constants.CLIENT.rate_limiter.rate_limits[url].get_wait_time()
+        wait_time = constants.PYDISPIX_CLIENT.rate_limiter.rate_limits[url].get_wait_time()
         expected_get_pixel_time = wait_time + time.time()
 
         if expected_update_time > expected_get_pixel_time:
             # Using get_pixel will be faster than waiting for canvas update
-            return await constants.CLIENT.get_pixel(x, y)
+            return await constants.PYDISPIX_CLIENT.get_pixel(x, y)
 
     # Waiting for get_pixel would take longer, wait out the canvas update
     wait_time = expected_update_time - time.time()
@@ -151,7 +151,7 @@ async def update_tasks() -> None:
     global update_time
     global canvas
 
-    canvas = await constants.CLIENT.get_canvas()
+    canvas = await constants.PYDISPIX_CLIENT.get_canvas()
 
     local_tasks = []
     for project in projects:
