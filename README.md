@@ -18,15 +18,22 @@ To run your own development testing version of the API, follow these steps:
 3. Go to `OAuth2` section, and set your environmental variables for `CLIENT_ID` and `CLIENT_SECRET` accordingly to the Client Information in this section
 4. Decide which URL should be used to access the API (if you're just testing, use `http://localhost:8000`), and set it as `BASE_URL` env variable
 5. Set URI (redirect URL) in the discord application to: `[BASE_URL]/oauth_callback`, so in our case: `http://localhost:8000/oauth_callback`
-6. Generate the OAuth2 URL with `Identify` scope, and set it to `OAUTH_REDIRECT_URL` env variable
+6. Generate the OAuth2 URL with the `identify` scope. If you plan to use autojoin, you
+   also need the `guilds.join` scope. Set `OAUTH_REDIRECT_URL` to the generated URL.
 7. Set `JWT_SECRET` variable to some secret, this will be used to encode the JWT tokens, make sure it's secure enough
 8. Set `PIXELS_API_TOKEN` variable, this will be the token you got from the [official python-discord's webpage](https://pixels.pythondiscord.com/info/)
 9. You can also set `LOG_LEVEL` variable, to control the logging level that should be used, this defaults to `INFO`, set it to `DEBUG` if you need to
+10. To enable automatic joining of users into your discord guild, create a bot user in
+    the same discord application you used for OAuth and invite it to the guild you want
+    to use. Next, set `ENABLE_DISCORD_AUTOJOIN` to `1`, `DISCORD_GUILD_ID` to the ID of
+    the guild you want to use, and `DISCORD_BOT_TOKEN` to the token of your discord bot.
+11. Refer to `rickchurch/constants.py` for more information on how to configure the
+    application.
 
 ### Setup the running environment
 
 You can use the `docker-compose` which is more than sufficient for testing:
-*Note: this guide is meant for linux, if you're on windows, search how to run docker-compose there*
+_Note: this guide is meant for linux, if you're on windows, search how to run docker-compose there_
 
 1. Install docker, specifically `docker-compose`. (I won't detail this, for Arch Linux it's `pacman -S docker-compose`)
 2. Go to the into the root of the repository. (`cd /path/to/rickchurch`)

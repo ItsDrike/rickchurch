@@ -7,6 +7,7 @@ _RGB_RE = re.compile(r"[0-9a-fA-F]{6}")
 
 class Task(pydantic.BaseModel):
     """A task used by the API."""
+
     x: int
     y: int
     rgb: str
@@ -32,6 +33,7 @@ class Task(pydantic.BaseModel):
 
 class ProjectDetails(pydantic.BaseModel):
     """A project used by the API."""
+
     name: str
     x: int
     y: int
@@ -41,6 +43,7 @@ class ProjectDetails(pydantic.BaseModel):
 
 class Project(pydantic.BaseModel):
     """Identifiable project. Name is all we need to find any project."""
+
     name: str
 
 
@@ -60,4 +63,5 @@ class User(pydantic.BaseModel):
 
 class Message(pydantic.BaseModel):
     """An API response message."""
+
     message: str
