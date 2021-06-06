@@ -103,11 +103,11 @@ async def assign_free_task(user_id: int) -> Task:
     task = random.choice(free_tasks)
     free_tasks.remove(task)
     tasks[user_id] = task
-    await postpone(
+    asyncio.create_task(postpone(
         constants.task_pending_delay,
         to_coro(unassign_task, user_id),
         predicate=lambda: user_id in tasks
-    )
+    ))
     return task
 
 
@@ -116,7 +116,6 @@ def unassign_task(user_id: int) -> None:
     global tasks
     global free_tasks
 
-    logger.info("Task unassigned")
     task = tasks[user_id]
     del tasks[user_id]
     free_tasks.append(task)
