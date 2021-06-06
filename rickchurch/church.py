@@ -303,7 +303,7 @@ async def remove_project(request: fastapi.Request, project: Project) -> Message:
         raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
 
     await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
-    return Message(message=f"Project {project.name} was added successfully.")
+    return Message(message=f"Project {project.name} was removed successfully.")
 
 
 @app.put("/mods/project", tags=["Moderation endpoint"], response_model=Message)
