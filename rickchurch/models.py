@@ -3,9 +3,9 @@ import binascii
 import re
 from io import BytesIO
 
-import pydantic
 import PIL
 import PIL.Image
+import pydantic
 
 _RGB_RE = re.compile(r"[0-9a-fA-F]{6}")
 
