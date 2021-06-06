@@ -83,7 +83,7 @@ def serialize_image(image: PIL.Image.Image) -> str:
 async def postpone(seconds: Union[int, float], coro: Coroutine, predicate: Callable):
     try:
         await asyncio.sleep(seconds)
-        if predicate is True:
+        if predicate() is True:
             # Prevent `coro` from cancelling itself by shielding it
             await asyncio.shield(coro)
     finally:
@@ -91,3 +91,7 @@ async def postpone(seconds: Union[int, float], coro: Coroutine, predicate: Calla
         # But only do so if it wasn't awaited yet, since the coro can also cancel itself
         if inspect.getcoroutinestate(coro) == "CORO_CREATED":
             coro.close()
+
+
+async def to_coro(sync_func: Callable, *args, **kwargs):
+    return sync_func(*args, **kwargs)

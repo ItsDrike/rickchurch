@@ -1,7 +1,7 @@
 import asyncio
+import logging
 import random
 import time
-from functools import partial
 from typing import Optional, Tuple
 
 import fastapi
@@ -9,7 +9,9 @@ import pydispix
 
 from rickchurch import constants
 from rickchurch.models import ProjectDetails, Task
-from rickchurch.utils import deserialize_image, postpone
+from rickchurch.utils import deserialize_image, postpone, to_coro
+
+logger = logging.getLogger("rickchurch")
 
 # Use global variables to keep track of current task list,
 # this isn't ideal, but it's the easiest solution we can use.
@@ -103,7 +105,7 @@ async def assign_free_task(user_id: int) -> Task:
     tasks[user_id] = task
     await postpone(
         constants.task_pending_delay,
-        partial(unassign_task, user_id),  # type: ignore - partial doesn't explicitly return coro
+        to_coro(unassign_task, user_id),
         predicate=lambda: user_id in tasks
     )
     return task
@@ -114,6 +116,7 @@ def unassign_task(user_id: int) -> None:
     global tasks
     global free_tasks
 
+    logger.info("Task unassigned")
     task = tasks[user_id]
     del tasks[user_id]
     free_tasks.append(task)
