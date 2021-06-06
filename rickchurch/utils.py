@@ -18,11 +18,7 @@ logger = logging.getLogger("rickchurch")
 async def fetch_projects(db_conn: asyncpg.Connection) -> List[ProjectDetails]:
     """Obtain list of active projects in the database"""
     async with db_conn.transaction():
-        db_projects = await db_conn.fetchrow("SELECT * FROM projects")
-
-    # If we have a single project, it wouldn't be a list
-    if not isinstance(db_projects, list):
-        db_projects = [db_projects]
+        db_projects = await db_conn.fetch("SELECT * FROM projects")
 
     projects = []
     for db_project in db_projects:
