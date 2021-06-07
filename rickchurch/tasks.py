@@ -2,7 +2,7 @@ import asyncio
 import logging
 import random
 import time
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import fastapi
 import pydispix
@@ -15,9 +15,9 @@ logger = logging.getLogger("rickchurch")
 
 # Use global variables to keep track of current task list,
 # this isn't ideal, but it's the easiest solution we can use.
-tasks = {}
-free_tasks = []
-projects = []
+tasks: Dict[int, Task] = {}
+free_tasks: List[Task] = []
+projects: List[ProjectDetails] = []
 canvas: Optional[pydispix.Canvas] = None
 update_time = float("-inf")  # Unix last update timestamp
 
@@ -174,7 +174,7 @@ async def update_tasks() -> None:
             if canvas[x, y].triple == color:
                 continue
 
-            local_tasks.append(Task(x=x, y=y, rgb=pydispix.parse_color(color)))
+            local_tasks.append(Task(x=x, y=y, rgb=pydispix.parse_color(color), project_name=project.name))
 
     active_tasks = set(free_tasks).union(set(tasks.values()))
     for task in local_tasks:

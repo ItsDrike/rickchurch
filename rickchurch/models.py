@@ -16,6 +16,7 @@ class Task(pydantic.BaseModel):
     x: int
     y: int
     rgb: str
+    project_name: str
 
     # Validators for x and y aren't added, because we don't know canvas dimensions
     # and we can't make async request for them here, so we only validate rgb
@@ -33,7 +34,7 @@ class Task(pydantic.BaseModel):
 
     def __hash__(self):
         # Make sure same tasks have the same hash, for easy O(1) lookups
-        return hash((self.x, self.y, self.rgb))
+        return hash((self.x, self.y, self.rgb, self.project_name))
 
 
 class ProjectDetails(pydantic.BaseModel):
