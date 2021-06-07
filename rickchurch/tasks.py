@@ -28,7 +28,7 @@ async def submit_task(task: Task, user_id: int) -> None:
 
     submit_time = time.time()
 
-    if tasks[user_id] != task:
+    if tasks.get(user_id) != task:
         raise fastapi.HTTPException(
             status_code=409,
             detail="This task doesn't belong to you, "
