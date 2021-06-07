@@ -3,7 +3,7 @@ FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 # Set pip to have no saved cache
 ENV PIP_NO_CACHE_DIR=false \
     MODULE_NAME="rickchurch" \
-    MAX_WORKERS=10
+    MAX_WORKERS=1
 
 # Install poetry
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
