@@ -66,8 +66,7 @@ async def get_fastest_pixel(x: int, y: int, submit_time: float) -> pydispix.Pixe
 
         # Check if expected time for use get_pixel endpoint wouldn't be lower
         url = constants.PYDISPIX_CLIENT.resolve_endpoint("/get_pixel")
-        # TODO: Waiting on pydispix update, make_raw_request needs to use httpx/async
-        constants.PYDISPIX_CLIENT.make_raw_request(
+        await constants.PYDISPIX_CLIENT.make_raw_request(
             "HEAD", url,
             headers=constants.PYDISPIX_CLIENT.headers,
             update_rate_limits=True
