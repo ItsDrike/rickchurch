@@ -28,11 +28,6 @@ async def submit_task(task: Task, user_id: int) -> None:
 
     submit_time = time.time()
 
-    if task not in tasks.values():
-        raise fastapi.HTTPException(
-            status_code=409,
-            detail="This task doesn't exist, it was likely was already completed by someone else."
-        )
     if tasks[user_id] != task:
         raise fastapi.HTTPException(
             status_code=409,
