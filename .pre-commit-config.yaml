@@ -23,3 +23,7 @@ repos:
         language: python
         types: [python]
         require_serial: true
+  - repo: https://github.com/necaris/pre-commit-pyright
+    rev: '1.1.53'
+    hooks:
+    - id: pyright

@@ -75,11 +75,10 @@ jobs:
           ${{ steps.python.outputs.python-version }}-\
           ${{ hashFiles('./.pre-commit-config.yaml') }}"
 
-      # Skip flake8 since it will have it's own section
-      # make a user install for pre-commit by using
-      # PIP_USER=0
+      # Skip flake8 and pyright since they will have it's own section
+      # make a user install for pre-commit by using PIP_USER=0
       - name: Run pre-commit hooks
-        run: export PIP_USER=0; SKIP=flake8 pre-commit run --all-files
+        run: export PIP_USER=0; SKIP=pyright,flake8 pre-commit run --all-files
 
       # Run flake8 formatting checks for general code style (lint) check
       # Error format:
