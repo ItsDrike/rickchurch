@@ -186,7 +186,7 @@ async def roll(request: fastapi.Request) -> fastapi.Response:
 # region: Member API Endpoints
 
 
-@app.get("/projects", tags=["Member endpoint"], response_model=List[Project])
+@app.get("/projects", tags=["Member endpoint"], response_model=List[ProjectDetails])
 async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
     """Obtain all active project data."""
     request.state.auth.raise_if_failed()
