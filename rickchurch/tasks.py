@@ -176,7 +176,22 @@ async def update_tasks() -> None:
 
             local_tasks.append(Task(x=x, y=y, rgb=pydispix.parse_color(color), project_name=project.name))
 
-    active_tasks = set(free_tasks).union(set(tasks.values()))
+    # Set some variables for fast lookups
+    local_tasks_set = set(local_tasks)
+    free_tasks_set = set(free_tasks)
+    tasks_set = set(tasks.values())
+    rev_tasks = {value: key for key, value in tasks.items()}
+    active_tasks = free_tasks_set.union(tasks_set)
+
+    # Remove tasks that aren't tracked anymore (from removed projects)
+    for task in active_tasks:
+        if task not in local_tasks_set:
+            if task in free_tasks_set:
+                free_tasks.remove(task)
+            elif task in rev_tasks:
+                key = rev_tasks[task]
+                del tasks[key]
+
     for task in local_tasks:
         if task in active_tasks:
             continue
