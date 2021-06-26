@@ -29,4 +29,5 @@ services:
     ports:
       - "127.0.0.1:8000:80"
     environment:
+      MAX_WORKERS: 1
       DATABASE_URL: postgres://rickchurch:rickchurch@postgres:5432/rickchurch

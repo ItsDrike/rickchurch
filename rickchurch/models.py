@@ -1,5 +1,10 @@
+import base64
+import binascii
 import re
+from io import BytesIO
 
+import PIL
+import PIL.Image
 import pydantic
 
 _RGB_RE = re.compile(r"[0-9a-fA-F]{6}")
@@ -11,6 +16,7 @@ class Task(pydantic.BaseModel):
     x: int
     y: int
     rgb: str
+    project_name: str
 
     # Validators for x and y aren't added, because we don't know canvas dimensions
     # and we can't make async request for them here, so we only validate rgb
@@ -26,6 +32,10 @@ class Task(pydantic.BaseModel):
                 "for example FF00ff for purple."
             )
 
+    def __hash__(self):
+        # Make sure same tasks have the same hash, for easy O(1) lookups
+        return hash((self.x, self.y, self.rgb, self.project_name))
+
 
 class ProjectDetails(pydantic.BaseModel):
     """A project used by the API."""
@@ -34,7 +44,18 @@ class ProjectDetails(pydantic.BaseModel):
     x: int
     y: int
     priority: int
-    image: str  # base64 encoded image string
+    image: str
+
+    @pydantic.validator("image")
+    def image_must_be_base64_img(cls, image: str) -> str:   # noqa: N805 - method argument should be self
+        try:
+            decoded = base64.b64decode(image)
+            _ = PIL.Image.open(BytesIO(decoded))
+            return image
+        except binascii.Error:
+            raise ValueError("image must be base64 encoded image")
+        except PIL.UnidentifiedImageError:
+            raise ValueError("image must be PNG encoded with base64")
 
 
 class Project(pydantic.BaseModel):

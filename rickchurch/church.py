@@ -1,18 +1,19 @@
+import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
 import fastapi
+import httpx
 import pydispix
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from httpx import AsyncClient
 
-from rickchurch import constants
+from rickchurch import constants, tasks
 from rickchurch.auth import add_user, authorized
 from rickchurch.log import setup_logging
-from rickchurch.models import Message, Project, ProjectDetails, User
+from rickchurch.models import Message, Project, ProjectDetails, Task, User
 from rickchurch.utils import fetch_projects, get_oauth_user
 
 logger = logging.getLogger("rickchurch")
@@ -64,17 +65,14 @@ app.openapi = custom_openapi
 @app.on_event("startup")
 async def startup() -> None:
     """Create asyncpg connection pool on startup and setup logging."""
-    app.state.httpx_client = AsyncClient()
-
-    # We have to make a global client object as there is no way for us to
-    # send the objects to the following requests from this function.
-    global client
-    client = pydispix.Client(constants.pixels_api_token)
-
+    app.state.httpx_client = httpx.AsyncClient()
     setup_logging(constants.log_level)
 
     # Initialize DB connection
     await constants.DB_POOL
+
+    # Start refreshing tasks
+    asyncio.create_task(tasks.reload_loop())
 
 
 @app.on_event("shutdown")
@@ -111,7 +109,7 @@ async def authorize() -> fastapi.Response:
 @app.get("/oauth_callback", include_in_schema=False)
 async def auth_callback(request: fastapi.Request) -> fastapi.Response:
     """This endpoint is only used as a redirect target from discord OAuth2."""
-    httpx_client: AsyncClient = request.app.state.httpx_client
+    httpx_client: httpx.AsyncClient = request.app.state.httpx_client
     code = request.query_params["code"]
     try:
         user, access_token = await get_oauth_user(httpx_client, code)
@@ -188,11 +186,26 @@ async def roll(request: fastapi.Request) -> fastapi.Response:
 # region: Member API Endpoints
 
 
-@app.get("/projects", tags=["Member endpoint"], response_model=List[Project])
+@app.get("/projects", tags=["Member endpoint"], response_model=List[ProjectDetails])
 async def get_projects(request: fastapi.Request) -> List[ProjectDetails]:
     """Obtain all active project data."""
     request.state.auth.raise_if_failed()
     return await fetch_projects(request.state.db_conn)
+
+
+@app.get("/task", tags=["Member endpoint"], response_model=Task)
+async def get_task(request: fastapi.Request) -> Task:
+    request.state.auth.raise_if_failed()
+    user_id = request.state.auth.user_id
+    return await tasks.assign_free_task(user_id)
+
+
+@app.post("/task", tags=["Member endpoint"], response_model=Message)
+async def post_task(request: fastapi.Request, task: Task) -> Message:
+    request.state.auth.raise_if_failed()
+    user_id = request.state.auth.user_id
+    await tasks.submit_task(task, user_id)
+    return Message(message="Task submitted successfully.")
 
 
 # endregion
@@ -290,7 +303,7 @@ async def remove_project(request: fastapi.Request, project: Project) -> Message:
         raise fastapi.HTTPException(status_code=404, detail=f"Database project {project.name} doesn't exist.")
 
     await db_conn.execute("DELETE FROM projects WHERE project_name=$1", project.name)
-    return Message(message=f"Project {project.name} was added successfully.")
+    return Message(message=f"Project {project.name} was removed successfully.")
 
 
 @app.put("/mods/project", tags=["Moderation endpoint"], response_model=Message)
