@@ -57,7 +57,7 @@ async def get_fastest_pixel(x: int, y: int, submit_time: float) -> pydispix.Pixe
     - If both of the above are false, wait out the time limit to canvas update.
     """
     if update_time >= submit_time:
-        return canvas[x, y]
+        return canvas[x, y]  # type: ignore - canvas won't be None here
     else:
         # We haven't yet updated the canvas
         expected_update_time = constants.task_refresh_time + update_time
@@ -81,7 +81,7 @@ async def get_fastest_pixel(x: int, y: int, submit_time: float) -> pydispix.Pixe
     # Waiting for get_pixel would take longer, wait out the canvas update
     wait_time = expected_update_time - time.time()
     await asyncio.sleep(wait_time)
-    return canvas[x, y]
+    return canvas[x, y]  # type: ignore - canvas won't be None here
 
 
 async def assign_free_task(user_id: int) -> Task:
@@ -99,7 +99,7 @@ async def assign_free_task(user_id: int) -> Task:
     tasks[user_id] = task
     asyncio.create_task(postpone(
         constants.task_pending_delay,
-        to_coro(unassign_task, user_id),
+        to_coro(unassign_task, user_id),  # type: ignore
         predicate=lambda: user_id in tasks
     ))
     return task
@@ -165,7 +165,7 @@ async def update_tasks() -> None:
             color: Tuple[int, int, int] = img_rgb.getpixel((x, y))  # type: ignore - this is RGB (3x int tuple)
 
             # Check if color is already matching
-            if canvas[x, y].triple == color:
+            if canvas[x, y].triple == color:  # type: ignore - canvas won't be None here
                 continue
 
             local_tasks.append(Task(x=x, y=y, rgb=pydispix.parse_color(color), project_name=project.name))
